@@ -283,15 +283,19 @@ contains
           do j = nlevsoi+2,nlevgrnd  ! 10-m bedrock layers
              dzsoi(j) = 10._r8
           enddo
-       else if (soil_layerstruct_predefined == '20SL_8.5m') then
+       else if (soil_layerstruct_predefined == '20SL_8.5m') then !!Change layer thickness_Tanjila
           do j = 1, 4  ! linear increase in layer thickness of...
-             dzsoi(j) = j * 0.02_r8                     ! ...2 cm each layer
+             dzsoi(j) = j * 0.02_r8                     ! ...2 cm each layer 
           enddo
-          do j = 5, 13
-             dzsoi(j) = dzsoi(4) + (j - 4) * 0.04_r8    ! ...4 cm each layer
+          do j = 5, 10
+             dzsoi(j) = dzsoi(4) + (j - 4) * 0.04_r8    ! ...4 cm each layer 
           enddo
-          do j = 14, nlevsoi
-             dzsoi(j) = dzsoi(13) + (j - 13) * 0.10_r8  ! ...10 cm each layer
+          !tanjila
+          do j = 11, 15
+             dzsoi(j) = dzsoi(10) + (j - 10) * 01_r8    ! tanjila ! 1m each layer
+          enddo
+          do j = 16, nlevsoi
+             dzsoi(j) = dzsoi(15) + (j - 15) * 1.20_r8  ! ...10 cm each layer !tanjila 1.2m
           enddo
           do j = nlevsoi + 1, nlevgrnd  ! bedrock layers
              dzsoi(j) = dzsoi(nlevsoi) + (((j - nlevsoi) * 25._r8)**1.5_r8) / 100._r8
