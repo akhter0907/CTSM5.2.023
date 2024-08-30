@@ -291,7 +291,7 @@ contains
              dzsoi(j) = dzsoi(4) + (j - 4) * 0.04_r8    ! ...4 cm each layer 
           enddo
           do j = 14, nlevsoi
-             dzsoi(j) = dzsoi(13) + (j - 13) * 6.0_r8  ! ...10 cm each layer !tanjila 1.2m
+             dzsoi(j) = dzsoi(13) + (j - 13) * 2.7_r8  ! ...10 cm each layer !tanjila 1.2m
           enddo
           do j = nlevsoi + 1, nlevgrnd  ! bedrock layers
              dzsoi(j) = dzsoi(nlevsoi) + (((j - nlevsoi) * 25._r8)**1.5_r8) / 100._r8
