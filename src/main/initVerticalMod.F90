@@ -213,6 +213,7 @@ contains
     ! thickness-based (part 1) and error check
     else if (soil_layerstruct_predefined == '49SL_10m' .or. &
              soil_layerstruct_predefined == '20SL_8.5m' .or. &
+             soil_layerstruct_predefined == '20SL_19.4m' .or. & ! Aman: test increased soil layer but bedrock within 50m
              soil_layerstruct_predefined == '4SL_2m') then
        calc_method = 'thickness-based'
        if (soil_layerstruct_userdefined(1) /= rundef) then
@@ -295,6 +296,28 @@ contains
           enddo
           do j = nlevsoi + 1, nlevgrnd  ! bedrock layers
              dzsoi(j) = dzsoi(nlevsoi) + (((j - nlevsoi) * 25._r8)**1.5_r8) / 100._r8
+          enddo
+       ! Aman: added 20SL_19.4m
+       ! 19.4m thick soil layer with bedrock going upto 50m
+       ! This was added to test how water table changes with increase soil thickness.
+       ! And also to stick to the soil depth database in the surface file,
+       ! where the maximum depth is 50m.
+       else if (soil_layerstruct_predefined == '20SL_19.4m') then
+          do j = 1, 4  ! linear increase in layer thickness of...
+             dzsoi(j) = j * 0.02_r8                     ! ...2 cm each layer
+          enddo
+          do j = 5, 13
+             dzsoi(j) = dzsoi(4) + (j - 4) * 0.04_r8    ! ...4 cm each layer
+          enddo
+          do j = 14, 16
+             dzsoi(j) = dzsoi(13) + (j - 13) * 0.2_r8    ! ...20 cm each layer
+          enddo
+          do j = 17, nlevsoi
+             dzsoi(j) = dzsoi(16) + (j - 16) * 1._r8  ! ...100 cm each layer
+          enddo
+          do j = nlevsoi + 1, nlevgrnd  ! bedrock layers
+             ! Aman: slightly less increase in bedrock layer thickness
+             dzsoi(j) = dzsoi(nlevsoi) + (((j - nlevsoi) * 7._r8)**1.5_r8) / 100._r8
           enddo
        else if (soil_layerstruct_predefined == '4SL_2m') then
           dzsoi(1) = 0.1_r8

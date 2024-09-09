@@ -278,6 +278,10 @@ contains
        else if ( soil_layerstruct_predefined == '20SL_8.5m' ) then
          nlevsoi     =  20
          nlevgrnd    =  nlevsoi+5
+       ! Aman: added 20SL_19.4m
+       else if ( soil_layerstruct_predefined == '20SL_19.4m' ) then
+         nlevsoi     =  20
+         nlevgrnd    =  nlevsoi+5
        else if ( soil_layerstruct_predefined == '4SL_2m' ) then
           nlevsoi     =  4
           nlevgrnd    =  5
