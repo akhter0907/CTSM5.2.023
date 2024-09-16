@@ -8,6 +8,9 @@
 *~
 .vscode/
 
+# Aman - Temporary ifort files
+*.i90
+
 # vim files (from https://github.com/github/gitignore/blob/master/Global/Vim.gitignore)
 # Swap
 [._]*.s[a-v][a-z]
