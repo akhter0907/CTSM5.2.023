@@ -1,3 +1,8 @@
+  ! Modified Aman Shrestha 2024/09/20
+  ! Use exponential baseflow decay with water table depth
+  ! same as CLM4.5
+  ! in subroutine SubsurfaceLateralFlow
+  
 module SoilHydrologyMod
 
   !-----------------------------------------------------------------------
@@ -2391,9 +2396,17 @@ contains
             ! Non-hillslope columns
             ! baseflow is power law expression relative to bedrock layer
             if(zwt(c) <= zi(c,nbedrock(c))) then
-               qflx_latflow_out(c) = ice_imped_col(c) * baseflow_scalar &
-                    * tan(rpi/180._r8*col%topo_slope(c))* &
-                    (zi(c,nbedrock(c)) - zwt(c))**(params_inst%n_baseflow)
+               ! Aman: Commented out CLM5's code
+               ! qflx_latflow_out(c) = ice_imped_col(c) * baseflow_scalar &
+               !      * tan(rpi/180._r8*col%topo_slope(c))* &
+               !      (zi(c,nbedrock(c)) - zwt(c))**(params_inst%n_baseflow)
+
+               ! Aman 2024/09/20
+               ! Adding exponential baseflow decay
+
+               qflx_latflow_out(c)=ice_imped_col(c) &
+                    * 10._r8 * sin((rpi/180._r8) * col%topo_slope(c)) &
+                    * exp(-2.5_r8 * zwt(c))
             endif
             ! convert flux to volumetric flow
             qflx_latflow_out_vol(c) = 1.e-3_r8*qflx_latflow_out(c)*(grc%area(g)*1.e6_r8*col%wtgcell(c))
