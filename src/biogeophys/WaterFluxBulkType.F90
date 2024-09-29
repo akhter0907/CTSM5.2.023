@@ -1,3 +1,6 @@
+! Aman Shrestha 2024/09/28
+! Adding history fields for saturation excess and infiltration excess runoff
+
 module WaterFluxBulkType
 
   !------------------------------------------------------------------------------
@@ -244,6 +247,30 @@ contains
          avgflag='A', &
          long_name=this%info%lname('Annual ET'), &
          ptr_col=this%AnnET, c2l_scale_type='urbanf', default='inactive')
+
+    ! Aman 2024/09/28
+    ! New history field for saturation excess runoff
+    this%qflx_sat_excess_surf_col(begc:endc) = spval
+    call hist_addfld1d ( &
+        fname=this%info%fname('QSAT_XS'),  &
+        units='mm/s',  &
+        avgflag='A', &
+        long_name=this%info%lname('surface runoff due to saturation excess'), &
+        ptr_col=this%qflx_sat_excess_surf_col, default='inactive')
+        
+    ! Aman 2024/09/28
+    ! New history field for infiltration excess runoff
+    ! Use qflx_infl_excess_surf_col instead of qflx_infl_excess_col
+    ! because qflx_infl_excess_col can go to h2osfc pool whereas
+    ! qflx_infl_excess_surf_col goes to surface runoff only
+    ! See subroutine RouteInfiltrationExcess in SoilHydrologyMod.F90
+    this%qflx_infl_excess_surf_col(begc:endc) = spval
+    call hist_addfld1d ( &
+        fname=this%info%fname('QINFL_XS'),  &
+        units='mm/s',  &
+        avgflag='A', &
+        long_name=this%info%lname('surface runoff due to infiltration excess'), &
+        ptr_col=this%qflx_infl_excess_surf_col, default='inactive')
          
   end subroutine InitBulkHistory
   
