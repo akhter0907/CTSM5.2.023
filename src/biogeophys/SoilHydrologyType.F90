@@ -32,6 +32,9 @@ Module SoilHydrologyType
      real(r8), pointer :: icefrac_col       (:,:)   ! col fraction of ice       
      real(r8), pointer :: h2osfc_thresh_col (:)     ! col level at which h2osfc "percolates"   (time constant)
      real(r8), pointer :: xs_urban_col      (:)     ! col excess soil water above urban ponding limit
+     ! Aman 2024/10/03 - new vars for zbedrock and wtt
+     real(r8), pointer :: zbedrock_col      (:)     ! col bedrock depth
+     real(r8), pointer :: wtt_col           (:)     ! col water table thickness
 
      ! VIC 
      real(r8), pointer :: hkdepth_col       (:)     ! col VIC decay factor (m) (time constant)                    
