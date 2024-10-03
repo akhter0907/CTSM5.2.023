@@ -2,7 +2,10 @@
   ! Use exponential baseflow decay with water table depth
   ! same as CLM4.5
   ! in subroutine SubsurfaceLateralFlow
-  
+  ! Aman S 2024/10/03
+  ! Added history fields for bedrock depth and water table thickness 
+  ! in subroutine SubsurfaceLateralFlow
+
 module SoilHydrologyMod
 
   !-----------------------------------------------------------------------
@@ -2190,7 +2193,7 @@ contains
           qflx_qrgwl         =>    waterfluxbulk_inst%qflx_qrgwl_col         , & ! Output: [real(r8) (:)   ] qflx_surf at glaciers, wetlands, lakes (mm H2O /s)
           qflx_rsub_sat      =>    waterfluxbulk_inst%qflx_rsub_sat_col      , & ! Output: [real(r8) (:)   ] soil saturation excess [mm h2o/s]                 
           h2osoi_liq         =>    waterstatebulk_inst%h2osoi_liq_col        , & ! Output: [real(r8) (:,:) ] liquid water (kg/m2)                            
-          h2osoi_ice         =>    waterstatebulk_inst%h2osoi_ice_col          & ! Output: [real(r8) (:,:) ] ice lens (kg/m2)                                
+          h2osoi_ice         =>    waterstatebulk_inst%h2osoi_ice_col          & ! Output: [real(r8) (:,:) ] ice lens (kg/m2)        
           )
 
        ! Get time step
@@ -2631,6 +2634,15 @@ contains
           end if
        end do
 
+       ! Aman 2024/10/03
+       ! New vars for bedrock depth and water table thickness
+       do fc = 1, num_hydrologyc
+         c = filter_hydrologyc(fc)
+
+         soilhydrology_inst%zbedrock_col(c) = zi(c, nbedrock(c))
+         soilhydrology_inst%wtt_col(c) = zi(c,nbedrock(c)) - zwt(c)
+       end do
+       
      end associate
 
    end subroutine SubsurfaceLateralFlow

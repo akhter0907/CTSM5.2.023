@@ -1,3 +1,6 @@
+! Aman 2024/10/03
+! Add variables for history fields for depth to bedrock and water table thickness 
+
 Module SoilHydrologyType
 
   use shr_kind_mod          , only : r8 => shr_kind_r8
@@ -143,6 +146,11 @@ contains
     allocate(this%top_moist_limited_col(begc:endc))              ; this%top_moist_limited_col(:)  = nan
     allocate(this%ice_col           (begc:endc,nlayert))         ; this%ice_col           (:,:)   = nan
 
+    ! Aman 2024/10/03
+    ! Add variables to store bedrock depth and water table thickness
+    allocate(this%zbedrock_col      (begc:endc))                 ; this%zbedrock_col      (:)     = nan
+    allocate(this%wtt_col           (begc:endc))                 ; this%wtt_col           (:)     = nan
+
   end subroutine InitAllocate
 
   !------------------------------------------------------------------------
@@ -191,6 +199,18 @@ contains
     call hist_addfld1d (fname='ZWT_PERCH',  units='m',  &
          avgflag='A', long_name='perched water table depth (natural vegetated and crop landunits only)', &
          ptr_col=this%zwt_perched_col, l2g_scale_type='veg')
+
+   ! Aman 2024/10/03
+   ! Depth to bedrock and water table thickness
+   this%zbedrock_col(begc:endc) = spval
+   call hist_addfld1d (fname='ZBEDROCK',  units='m',  &
+         avgflag='A', long_name='depth to bedrock', &
+         ptr_col=this%zbedrock_col, l2g_scale_type='veg', default='inactive')
+
+   this%wtt_col(begc:endc) = spval
+   call hist_addfld1d (fname='WTT',  units='m',  &
+         avgflag='A', long_name='water table thickness', &
+         ptr_col=this%wtt_col, l2g_scale_type='veg')
 
   end subroutine InitHistory
 
