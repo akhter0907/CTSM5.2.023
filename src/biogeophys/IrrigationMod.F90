@@ -1,3 +1,5 @@
+! Yi Yao's irrigation mod
+! Updating to ctsm5.2 by Aman Shrestha
 module IrrigationMod
 
   !-----------------------------------------------------------------------
@@ -97,6 +99,7 @@ module IrrigationMod
   use PatchType        , only : patch                
   use subgridAveMod    , only : p2c, c2g
   use filterColMod     , only : filter_col_type, col_filter_from_logical_array
+  use clm_varpar       , only : cft_lb
   !
   implicit none
   private
@@ -221,8 +224,9 @@ module IrrigationMod
   ! There is no reason to make this a tunable parameter, because the behavior it governs
   ! (the trigger for irrigation) can be tuned via other parameters.
   !
-  ! TODO(wjs, 2016-09-08, updated by slevis 2024-07-06) assumed wilting point:
-  ! Make this a shared parameter? E.g., in clm_varcon
+  ! TODO(wjs, 2016-09-08) It looks like there is other code in CLM that also uses an
+  ! assumed wilting point (CNRootDynMod, maybe others). We should probably make this a
+  ! shared parameter, e.g., in clm_varcon.
   real(r8), parameter, private :: wilting_point_smp = -150000._r8
 
   ! Conversion factors
@@ -234,6 +238,7 @@ module IrrigationMod
   integer, parameter, public :: irrig_method_drip = 1
   ! Sprinkler is applied directly to canopy
   integer, parameter, public :: irrig_method_sprinkler = 2
+  integer, parameter, public :: irrig_method_flood = 3
 
   character(len=*), parameter, private :: sourcefile = &
        __FILE__
@@ -477,6 +482,8 @@ contains
          irrig_method_default_int = irrig_method_drip
       case ('sprinkler')
          irrig_method_default_int = irrig_method_sprinkler
+      case ('flood')
+         irrig_method_default_int = irrig_method_flood
       case default
          write(iulog,*) 'ERROR: unknown irrig_method_default: ', trim(irrig_method_default)
          call endrun('Unknown irrig_method_default')
@@ -759,7 +766,7 @@ contains
           ! ensure irrig_method is valid; if not set, use drip irrigation
           if(irrig_method(g,m) == irrig_method_unset) then
              this%irrig_method_patch(p) = this%params%irrig_method_default
-          else if (irrig_method(g,m) /= irrig_method_drip .and. irrig_method(g,m) /= irrig_method_sprinkler) then
+          else if (irrig_method(g,m) /= irrig_method_drip .and. irrig_method(g,m) /= irrig_method_sprinkler .and. irrig_method(g,m) /= irrig_method_flood) then
              write(iulog,*) subname //' invalid irrigation method specified'
              call endrun(subgrid_index=g, subgrid_level=subgrid_level_gridcell, msg='bad irrig_method '// &
                   errMsg(sourcefile, __LINE__))
@@ -1315,9 +1322,10 @@ contains
           waterflux_inst%qflx_irrig_drip_patch(p)      = qflx_irrig_tot
        else if(this%irrig_method_patch(p) == irrig_method_sprinkler) then
           waterflux_inst%qflx_irrig_sprinkler_patch(p) = qflx_irrig_tot
+       else if(this%irrig_method_patch(p) == irrig_method_flood) then
+          waterflux_inst%qflx_irrig_drip_patch(p) = qflx_irrig_tot
        else
-          call endrun(subgrid_index=p, subgrid_level=subgrid_level_patch, &
-               msg=' ERROR: irrig_method_patch set to invalid value ' // &
+          call endrun(msg=' ERROR: irrig_method_patch set to invalid value ' // &
                errMsg(sourcefile, __LINE__))
        endif
 
@@ -1420,6 +1428,7 @@ contains
 
     ! target soil moisture for this layer [kg/m2]
     real(r8) :: h2osoi_liq_target
+	real(r8) :: h2osoi_liq_target_satu
 
     ! soil moisture at wilting point for this layer [kg/m2]
     real(r8) :: h2osoi_liq_wilting_point
@@ -1429,6 +1438,7 @@ contains
 
     ! Total of h2osoi_liq_target down to the depth of irrigation in each column [kg/m2]
     real(r8) :: h2osoi_liq_target_tot(bounds%begc:bounds%endc)
+	real(r8) :: h2osoi_liq_target_satu_tot(bounds%begc:bounds%endc)
 
     ! Total of h2osoi_liq at wilting point down to the depth of irrigation in each column
     ! [kg/m2]
@@ -1440,9 +1450,14 @@ contains
     ! difference between desired soil moisture level for each column and current soil
     ! moisture level [kg/m2] [i.e., mm]
     real(r8) :: deficit(bounds%begc:bounds%endc)
+	real(r8) :: deficit_satu(bounds%begc:bounds%endc)
+    	real(r8) :: deficit_pool(bounds%begc:bounds%endc)
+
 
     ! deficit limited by river volume [kg/m2] [i.e., mm]
     real(r8) :: deficit_volr_limited(bounds%begc:bounds%endc)
+    real(r8) :: deficit_satu_volr_limited(bounds%begc:bounds%endc)
+    real(r8) :: deficit_pool_volr_limited(bounds%begc:bounds%endc)
 
     ! where do we need to check soil moisture to see if we need to irrigate?
     logical  :: check_for_irrig_patch(bounds%begp:bounds%endp)
@@ -1494,6 +1509,7 @@ contains
        reached_max_depth(c) = .false.
        h2osoi_liq_tot(c) = 0._r8
        h2osoi_liq_target_tot(c) = 0._r8
+       h2osoi_liq_target_satu_tot(c) = 0._r8
        h2osoi_liq_wilting_point_tot(c) = 0._r8
     end do
 
@@ -1520,6 +1536,12 @@ contains
                      dz = col%dz(c,j))
                 h2osoi_liq_target_tot(c) = h2osoi_liq_target_tot(c) + &
                      h2osoi_liq_target
+                h2osoi_liq_target_satu = this%RelsatToH2osoi( &
+                     relsat = 1._r8, &
+                     eff_porosity = eff_porosity(c,j), &
+                     dz = col%dz(c,j))
+                h2osoi_liq_target_satu_tot(c) = h2osoi_liq_target_satu_tot(c) + &
+                     h2osoi_liq_target_satu
 
                 h2osoi_liq_wilting_point = this%RelsatToH2osoi( &
                      relsat = this%relsat_wilting_point_col(c,j), &
@@ -1535,28 +1557,35 @@ contains
     ! Compute deficits
     ! First initialize deficits to 0 everywhere; this is needed for later averaging up to gridcell
     deficit(bounds%begc:bounds%endc) = 0._r8
+    deficit_satu(bounds%begc:bounds%endc) = 0._r8
+    deficit_pool(bounds%begc:bounds%endc) = 0._r8
+
     do fc = 1, check_for_irrig_col_filter%num
        c = check_for_irrig_col_filter%indices(fc)
 
        h2osoi_liq_at_threshold = h2osoi_liq_wilting_point_tot(c) + &
             this%params%irrig_threshold_fraction * &
             (h2osoi_liq_target_tot(c) - h2osoi_liq_wilting_point_tot(c))
-       if (h2osoi_liq_tot(c) < h2osoi_liq_at_threshold) then
-          deficit(c) = h2osoi_liq_target_tot(c) - h2osoi_liq_tot(c)
-          ! deficit shouldn't be less than 0: if it is, that implies that the
-          ! irrigation target is less than the irrigation threshold, which is not
-          ! supposed to happen
-          if (deficit(c) < 0._r8) then
+       if (h2osoi_liq_tot(c) < h2osoi_liq_at_threshold) then 
+         deficit(c) = (h2osoi_liq_target_tot(c) - h2osoi_liq_tot(c))
+         deficit_satu(c) = h2osoi_liq_target_satu_tot(c) - h2osoi_liq_tot(c)   
+         deficit_pool(c) = h2osoi_liq_target_satu_tot(c) - h2osoi_liq_tot(c) 
+         if (deficit(c) < 0._r8) then
              write(iulog,*) subname//' ERROR: deficit < 0'
              write(iulog,*) 'This implies that irrigation target is less than irrigatio&
                   &n threshold, which should never happen'
              call endrun(subgrid_index=c, subgrid_level=subgrid_level_column, msg='deficit < 0 '// &
                   errMsg(sourcefile, __LINE__))
-          end if
-       else
-          ! We're above the threshold - so don't irrigate
-          deficit(c) = 0._r8
-       end if
+         end if
+      else if (h2osoi_liq_tot(c) < h2osoi_liq_target_satu_tot(c)) then 
+         deficit_pool(c) = h2osoi_liq_target_satu_tot(c) - h2osoi_liq_tot(c) 
+
+      else
+         ! We're above the threshold - so don't irrigate
+         deficit(c) = 0._r8
+         deficit_satu(c) = 0._r8
+         deficit_pool(c) = 0._r8
+      end if
     end do
 
     ! Limit deficits by available volr, if desired. Note that we cannot do this limiting
@@ -1578,6 +1607,27 @@ contains
        deficit_volr_limited(bounds%begc:bounds%endc) = deficit(bounds%begc:bounds%endc)
     end if
 
+    if (limit_irrigation) then
+       call this%CalcDeficitVolrLimited( &
+            bounds = bounds, &
+            check_for_irrig_col_filter = check_for_irrig_col_filter, &
+            deficit = deficit_satu(bounds%begc:bounds%endc), &
+            volr = volr(bounds%begg:bounds%endg), &
+            deficit_volr_limited = deficit_satu_volr_limited(bounds%begc:bounds%endc))
+    else
+       deficit_satu_volr_limited(bounds%begc:bounds%endc) = deficit_satu(bounds%begc:bounds%endc)
+    end if
+    if (limit_irrigation) then
+       call this%CalcDeficitVolrLimited( &
+            bounds = bounds, &
+            check_for_irrig_col_filter = check_for_irrig_col_filter, &
+            deficit = deficit_pool(bounds%begc:bounds%endc), &
+            volr = volr(bounds%begg:bounds%endg), &
+            deficit_volr_limited = deficit_pool_volr_limited(bounds%begc:bounds%endc))
+    else
+       deficit_pool_volr_limited(bounds%begc:bounds%endc) = deficit_pool(bounds%begc:bounds%endc)
+    end if
+
     ! Convert deficits to irrigation rate
     do fp = 1, num_exposedvegp
        p = filter_exposedvegp(fp)
@@ -1585,12 +1635,27 @@ contains
 
        if (check_for_irrig_patch(p)) then
 
-          ! Convert units from mm to mm/sec
-          this%sfc_irrig_rate_patch(p) = deficit_volr_limited(c) / &
-               (this%dtime*this%irrig_nsteps_per_day)
-          this%irrig_rate_demand_patch(p) = deficit(c) / &
-               (this%dtime*this%irrig_nsteps_per_day)
+       ! Convert units from mm to mm/sec
+       if (col%itype(c)==(200+cft_lb+47)) then
+         this%sfc_irrig_rate_patch(p) = deficit_pool_volr_limited(c) / &
+             (this%dtime*this%irrig_nsteps_per_day)
+         this%irrig_rate_demand_patch(p) = deficit_pool(c) / &
+                 (this%dtime*this%irrig_nsteps_per_day)
 
+       else if(this%irrig_method_patch(p) == irrig_method_drip  .or.  this%irrig_method_patch(p) == irrig_method_sprinkler) then
+         this%sfc_irrig_rate_patch(p) = deficit_volr_limited(c) / &
+             (this%dtime*this%irrig_nsteps_per_day)
+         this%irrig_rate_demand_patch(p) = deficit(c) / &
+                 (this%dtime*this%irrig_nsteps_per_day)
+       else if(this%irrig_method_patch(p) == irrig_method_flood) then
+         this%sfc_irrig_rate_patch(p) = deficit_satu_volr_limited(c) / &
+             (this%dtime*this%irrig_nsteps_per_day)
+         this%irrig_rate_demand_patch(p) = deficit_satu(c) / &
+                 (this%dtime*this%irrig_nsteps_per_day)
+       else
+         call endrun(msg=' ERROR: irrig_method_patch set to invalid value ' // &
+            errMsg(sourcefile, __LINE__))
+        endif
           ! n_irrig_steps_left(p) > 0 is ok even if irrig_rate(p) ends up = 0
           ! in this case, we'll irrigate by 0 for the given number of time steps
           this%n_irrig_steps_left_patch(p) = this%irrig_nsteps_per_day
@@ -1607,7 +1672,7 @@ contains
     ! Determine whether a given patch needs to be checked for irrigation now.
     !
     ! !USES:
-    use clm_time_manager, only : get_local_time
+    use clm_time_manager, only : get_local_time, get_curr_calday
     use pftconMod       , only : pftcon
     !
     ! !ARGUMENTS:
@@ -1621,6 +1686,8 @@ contains
     ! number of seconds since the prescribed irrigation start time
     integer  :: seconds_since_irrig_start_time
 
+    integer  :: days_of_year
+
     character(len=*), parameter :: subname = 'PointNeedsCheckForIrrig'
     !-----------------------------------------------------------------------
     
@@ -1628,6 +1695,7 @@ contains
          elai > this%params%irrig_min_lai) then
        ! see if it's the right time of day to start irrigating:
        seconds_since_irrig_start_time = get_local_time( londeg, starttime=this%params%irrig_start_time, offset=-this%dtime )
+       days_of_year = get_curr_calday()
        if (seconds_since_irrig_start_time < this%dtime) then
           check_for_irrig         = .true.
        else

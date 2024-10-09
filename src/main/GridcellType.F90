@@ -26,6 +26,8 @@ module GridcellType
      real(r8), pointer :: lon              (:) ! longitude (radians)
      real(r8), pointer :: latdeg           (:) ! latitude (degrees)
      real(r8), pointer :: londeg           (:) ! longitude (degrees)
+     real(r8), pointer :: GW_ratio         (:) ! Tanjila comment: FFelfelani added: gridcell USGS GW ratio
+     real(r8), pointer :: bedrock_depth    (:) ! Tanjila comment: FFelfelani added: gridcell bedrock depth
      logical , pointer :: active           (:) ! just needed for symmetry with other subgrid types
 
      integer,  pointer :: nbedrock         (:) ! index of uppermost bedrock layer
@@ -67,6 +69,8 @@ contains
     allocate(this%lon       (begg:endg)) ; this%lon       (:) = nan
     allocate(this%latdeg    (begg:endg)) ; this%latdeg    (:) = nan
     allocate(this%londeg    (begg:endg)) ; this%londeg    (:) = nan
+    allocate(this%GW_ratio  (begg:endg)) ; this%GW_ratio  (:) = nan !Tanjila comment: FFelfelani added
+    allocate(this%bedrock_depth  (begg:endg)) ; this%bedrock_depth  (:) = nan !Tanjila comment: FFelfelani added
     allocate(this%active    (begg:endg)) ; this%active    (:) = .true.
     allocate(this%nbedrock  (begg:endg)) ; this%nbedrock  (:) = ispval
 
@@ -91,6 +95,8 @@ contains
     deallocate(this%lon              )
     deallocate(this%latdeg           )
     deallocate(this%londeg           )
+    deallocate(this%GW_ratio         ) !Tanjila comment: FFelfelani added
+    deallocate(this%bedrock_depth    ) !Tanjila comment: FFelfelani added
     deallocate(this%active           )
     deallocate(this%nbedrock         )
     deallocate(this%max_dayl         )

@@ -79,6 +79,7 @@ contains
     integer  :: i,g                                   ! index
     type(filter_col_type) :: filter_active_c          ! filter for active columns
     real(r8) :: h2osno_total(bounds%begc:bounds%endc) ! total snow water (mm H2O)
+    real(r8) :: qflx_adjusted_irrig_col(bounds%begc:bounds%endc) ! total column-level adjusted irrigation ! Tanjila comment: FFelfelani added
     real(r8), parameter :: amC   = 12.0_r8          ! Atomic mass number for Carbon
     real(r8), parameter :: amO   = 16.0_r8          ! Atomic mass number for Oxygen
     real(r8), parameter :: amCO2 = amC + 2.0_r8*amO ! Atomic mass number for CO2
@@ -191,6 +192,7 @@ contains
     ! The following converts g of C to kg of CO2
     real(r8), parameter :: convertgC2kgCO2 = 1.0e-3_r8 * (amCO2/amC)
     !------------------------------------------------------------------------
+    associate(GW_ratio           => col%GW_ratio)! Input:  [real(r8) (:)   ]  USGS GW ratio as irrigation source !Tanjila comment: FFelfelani added
 
     SHR_ASSERT_ALL_FL((ubound(net_carbon_exchange_grc) == (/bounds%endg/)), sourcefile, __LINE__)
 
@@ -452,8 +454,23 @@ contains
          water_inst%waterfluxbulk_inst%qflx_liq_dynbal_grc(g)
     enddo
 
+!Tanjila comment: FFelfelani added 
+    qflx_adjusted_irrig_col(:) = 0._r8
+    !  we need to adjust qflx_sfc_irrig_col and remove the GW-fed part, then 
+    !  send it to rof
+     nstep = get_nstep()
+    do c = bounds%begc, bounds%endc
+        l = col%landunit(c)
+        g = col%gridcell(c)
+          ! if (nstep == 400 .and. c == 838456) write(*,*) 'lat, lon: ', grc%latdeg(g), grc%londeg(g)
+        if ((lun%itype(l)==istsoil .or. lun%itype(l)==istcrop) .and. col%active(c)) then
+             qflx_adjusted_irrig_col(c) = (1._r8 - GW_ratio(c)) * irrigation_inst%qflx_sfc_irrig_col(c)
+                !if (nstep == 300 .and. (irrigation_inst%qflx_sfc_irrig_col(c) .ne. 0._r8)) write(*,*) 'c1, g, lat, lon: ', c, g, grc%latdeg(g), grc%londeg(g)
+                !if (nstep == 300 .and. (irrigation_inst%qflx_sfc_irrig_col(c) .ne. 0._r8)) write(*,*) GW_ratio(c), irrigation_inst%qflx_sfc_irrig_col(c), qflx_adjusted_irrig_col(c)
+        end if
+    end do
     call c2g( bounds, &
-         water_inst%waterfluxbulk_inst%qflx_sfc_irrig_col (bounds%begc:bounds%endc), &
+         water_inst%waterfluxbulk_inst%qflx_adjusted_irrig_col (bounds%begc:bounds%endc), &
          water_inst%waterlnd2atmbulk_inst%qirrig_grc(bounds%begg:bounds%endg), &
          c2l_scale_type= 'urbanf', l2g_scale_type='unity' )
 

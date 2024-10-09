@@ -428,6 +428,23 @@ lower_boundary_condition = 4 : 11-layer solution w/ aquifer layer               
 
 TODO(bja, 2015-09) these should be strings so they have meaningful names instead of ints. 
 </entry>
+!Tanjila comment: FFelfelani added
+<entry id="groundwater_scheme" type="integer" category="clm_physics"
+       group="soilwater_movement_inparm" valid_values="0,1,2,3" >
+Index of lower boundary condition for Richards equation.
+
+groundwater_scheme = 0 : gw_default: default groundwater scheme of CLM5.0                    
+groundwater_scheme = 1 : gw_Theim_FanTransmiss: Well hydraulics w/ aquifer layer + Fan parameterization for transmissivity
+groundwater_scheme = 2 : gw_Theim_GleesonTransmiss: Well hydraulics w/o aquifer layer (w/ bedrock) + Gleeson derived tramissivity
+groundwater_scheme = 3 : gw_Fan: Fan scheme for lateral flow and transmissivity
+
+TODO(bja, 2019-05) these should be strings so they have meaningful names instead of ints. 
+</entry>
+
+<entry id="use_pumping" type="logical" category="clm_physics"
+       group="soilwater_movement_inparm" valid_values="" >
+Activate/deactivate pumping scheme.
+</entry>
 
 <entry id="dtmin" type="real" category="clm_physics"
        group="soilwater_movement_inparm" valid_values="" >

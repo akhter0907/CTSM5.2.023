@@ -58,6 +58,13 @@ module SoilWaterMovementMod
   integer, parameter :: bc_waterTable = 3
   integer, parameter :: bc_aquifer    = 4
 
+  ! Tanjila added: FFelfelani Comment: Groundwater Scheme
+  integer, parameter :: gw_default  = 0
+  integer, parameter :: gw_FanLat_Pump  = 1
+  integer, parameter :: gw_FanLat_TheimPump  = 2
+  integer, parameter :: gw_Theim_GleesonTransmiss  = 3
+  integer, parameter :: gw_Fan  = 4
+
   ! Soil hydraulic properties
   integer, parameter :: soil_hp_clapphornberg_1978=0
   integer, parameter :: soil_hp_vanGenuchten_1980=1
@@ -67,6 +74,7 @@ module SoilWaterMovementMod
   integer :: soilwater_movement_method    ! method for solving richards equation
   integer :: upper_boundary_condition     ! named variable for the boundary condition
   integer :: lower_boundary_condition     ! named variable for the boundary condition
+  !integer, public, parameter :: groundwater_scheme           ! FFelfelani Comment: named variable for groundwater scheme
 
   ! Adaptive time stepping algorithmic control parameters
   real(r8) :: dtmin             ! minimum time step length (seconds)
@@ -117,6 +125,7 @@ contains
     use fileutils       , only : getavu, relavu
     use spmdMod         , only : mpicom, masterproc
     use shr_mpi_mod     , only : shr_mpi_bcast
+    use clm_varctl      , only : iulog, use_bedrock, groundwater_scheme, use_pumping !Tanjila comment: FFelfelani added
     use clm_varctl      , only : iulog, use_bedrock
     use controlMod      , only : NLFilename
     use clm_nlUtilsMod  , only : find_nlgroup_name
@@ -141,7 +150,9 @@ contains
          xTolerLower,                  &
          expensive,                    &
          inexpensive,                  &
-         flux_calculation
+         flux_calculation,             &
+         groundwater_scheme,           & !Tanjila comment
+         use_pumping
 
     ! Default values for namelist
 
@@ -156,6 +167,8 @@ contains
     expensive=42
     inexpensive=1
     flux_calculation=inexpensive  
+    groundwater_scheme=gw_default !Tanjila added
+    use_pumping=.false.
 
     ! Read soilwater_movement namelist
     if (masterproc) then
@@ -181,11 +194,20 @@ contains
        if((use_bedrock) .and. (lower_boundary_condition /= bc_zero_flux)) then
           call endrun(subname // ':: ERROR inconsistent soilwater_movement namelist: use_bedrock requires bc_zero_flux lbc')
        endif
+
+       ! Tanjila comment: FFelfelani added: test for namelist consistency
+       if((groundwater_scheme == gw_FanLat_Pump) .and. &
+            (lower_boundary_condition < 3)) then
+          call endrun(subname // ':: ERROR inconsistent groundwater_scheme namelist: gw_FanLat_Pump must use bc_aquifer/bc_waterTable')
+       endif
+   
     endif
 
     call shr_mpi_bcast(soilwater_movement_method, mpicom)
     call shr_mpi_bcast(upper_boundary_condition, mpicom)
     call shr_mpi_bcast(lower_boundary_condition, mpicom)
+    call shr_mpi_bcast(groundwater_scheme, mpicom) !Tanjila added
+    call shr_mpi_bcast(use_pumping, mpicom) 
     call shr_mpi_bcast(dtmin, mpicom)
     call shr_mpi_bcast(verySmall, mpicom)
     call shr_mpi_bcast(xTolerUpper, mpicom)
@@ -202,6 +224,8 @@ contains
        write(iulog,*) '  soilwater_movement_method  = ',soilwater_movement_method
        write(iulog,*) '  upper_boundary_condition   = ',upper_boundary_condition
        write(iulog,*) '  lower_boundary_condition   = ',lower_boundary_condition
+       write(iulog,*) '  groundwater_scheme         = ',groundwater_scheme !Tanjila added
+       write(iulog,*) '  use_pumping                = ',use_pumping
 
        write(iulog,*) '  use_bedrock                = ',use_bedrock
        write(iulog,*) '  dtmin                      = ',dtmin

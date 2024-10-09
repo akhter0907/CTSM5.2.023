@@ -1,3 +1,5 @@
+! Yi Yao's irrigation mod
+! Updating to ctsm5.2 by Aman Shrestha
 module SurfaceWaterMod
 
   !-----------------------------------------------------------------------
@@ -24,7 +26,8 @@ module SurfaceWaterMod
   use WaterStateBulkType          , only : waterstatebulk_type
   use WaterDiagnosticBulkType     , only : waterdiagnosticbulk_type
   use WaterTracerUtils            , only : CalcTracerFromBulk
-
+  use landunit_varcon             , only : istcrop
+  use clm_varpar                  , only : cft_lb
   implicit none
   save
   private
@@ -211,6 +214,7 @@ contains
     real(r8) , intent(inout) :: frac_h2osfc( bounds%begc: )                   ! col fractional area with surface water greater than zero
     real(r8) , intent(inout) :: frac_h2osfc_nosnow( bounds%begc: )            ! col fractional area with surface water greater than zero (if no snow present)
     real(r8) , intent(inout) :: qflx_too_small_h2osfc_to_soil( bounds%begc: ) ! h2osfc transferred to soil if h2osfc is below some threshold (mm H2O /s)
+
     !
     ! !LOCAL VARIABLES:
     integer :: c,f,l          ! indices
@@ -237,7 +241,6 @@ contains
        !  Use newton-raphson method to iteratively determine frac_h2osfc
        !  based on amount of surface water storage (h2osfc) and 
        !  microtopography variability (micro_sigma)
-       
        if (h2osfc(c) > min_h2osfc) then
           ! a cutoff is needed for numerical reasons...(nonconvergence after 5 iterations)
           d=0.0_r8
@@ -473,7 +476,9 @@ contains
        c = filter_hydrologyc(fc)
 
        if (h2osfcflag==1) then
-          if (frac_h2osfc_nosnow(c) <= params_inst%pc) then
+          if (col%itype(c)==(200+cft_lb+46) .or. col%itype(c) == (200+cft_lb+47)) then
+             frac_infclust=0.0_r8
+          else if (frac_h2osfc_nosnow(c) <= params_inst%pc) then
              frac_infclust=0.0_r8
           else
              frac_infclust=(frac_h2osfc_nosnow(c)-params_inst%pc)**params_inst%mu
@@ -481,12 +486,18 @@ contains
        endif
 
        ! limit runoff to value of storage above S(pc)
-       if(h2osfc(c) > h2osfc_thresh(c) .and. h2osfcflag/=0) then
+       if (col%itype(c)==(200+cft_lb+46) .or. col%itype(c)==(200+cft_lb+47)) then
+          if (h2osfc(c) > 100) then
+             qflx_h2osfc_surf(c) = (h2osfc(c) - 100) / dtime
+          else
+             qflx_h2osfc_surf(c) = 0
+          end if
+       else if(h2osfc(c) > h2osfc_thresh(c) .and. h2osfcflag/=0) then
           ! spatially variable k_wet
-          k_wet=1.0e-4_r8 * sin((rpi/180._r8) * topo_slope(c))
+          k_wet=1.0e-4_r8 * sin((rpi/180.) * topo_slope(c))
           if (col%is_hillslope_column(c)) then
              ! require a minimum value to ensure non-zero outflow
-             k_wet = 1e-4_r8 * max(col%hill_slope(c),min_hill_slope)
+             k_wet = 1.0e-4_r8 * max(col%hill_slope(c),min_hill_slope)
           endif
           qflx_h2osfc_surf(c) = k_wet * frac_infclust * (h2osfc(c) - h2osfc_thresh(c))
 

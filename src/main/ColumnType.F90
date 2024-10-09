@@ -57,6 +57,8 @@ module ColumnType
      real(r8), pointer :: micro_sigma          (:)   ! microtopography pdf sigma (m)
      real(r8), pointer :: topo_slope           (:)   ! gridcell topographic slope
      real(r8), pointer :: topo_std             (:)   ! gridcell elevation standard deviation
+     real(r8), pointer :: GW_ratio             (:)   ! Tanjila comment: FFelfelani added column USGS GW ratio
+     real(r8), pointer :: bedrock_depth        (:)   ! Tanjila Comment: FFelfelani added bedrock_depth
 
      ! vertical levels
      integer , pointer :: snl                  (:)   ! number of snow layers
@@ -156,6 +158,8 @@ contains
     allocate(this%levgrnd_class(begc:endc,nlevmaxurbgrnd))     ; this%levgrnd_class(:,:) = ispval
     allocate(this%micro_sigma (begc:endc))                     ; this%micro_sigma (:)   = nan
     allocate(this%topo_slope  (begc:endc))                     ; this%topo_slope  (:)   = nan
+    allocate(this%GW_ratio    (begc:endc))                     ; this%GW_ratio    (:)   = nan !Tanjila comment: FFelfelani added
+    allocate(this%bedrock_depth    (begc:endc))                ; this%bedrock_depth    (:)   = nan !Tanjila comment: FFelfelani added
     allocate(this%topo_std    (begc:endc))                     ; this%topo_std    (:)   = nan
     allocate(this%is_hillslope_column(begc:endc))              ; this%is_hillslope_column(:) = .false.
     allocate(this%hydrologically_active(begc:endc))            ; this%hydrologically_active(:) = .false.
@@ -192,6 +196,8 @@ contains
     deallocate(this%z_lake     )
     deallocate(this%micro_sigma)
     deallocate(this%topo_slope )
+    deallocate(this%GW_ratio ) !Tanjila comment: FFelfelani added
+    deallocate(this%bedrock_depth ) !Tanjila comment: FFelfelani added
     deallocate(this%topo_std   )
     deallocate(this%nbedrock   )
     deallocate(this%levgrnd_class)
