@@ -785,47 +785,47 @@ contains
           ! Groundwater scheme: Default
           case(gw_default)
 
-			   do g = bounds%begg, bounds%endg
-				  errh2o_grc(g) = endwb_grc(g) - begwb_grc(g)  &
-					   - (forc_rain_grc(g)  &
-					   + forc_snow_grc(g)  &
-					   + forc_flood_grc(g)  &
-					   + qflx_sfc_irrig_grc(g)  &
-					   - soilhydrology_inst%Pump_wa_col(g)&
-					   + qflx_glcice_dyn_water_flux_grc(g)  &
-					   - qflx_evap_tot_grc(g)  &
-					   - qflx_surf_grc(g)  &
-					   - qflx_qrgwl_grc(g)  &
-					   - qflx_drain_grc(g)  &
-					   - qflx_drain_perched_grc(g)  &
-					   - qflx_ice_runoff_grc(g)  &
-					   - qflx_snwcp_discarded_liq_grc(g)  &
-					   - qflx_snwcp_discarded_ice_grc(g)) * dtime
-			   end do
+  			   do g = bounds%begg, bounds%endg
+  				  errh2o_grc(g) = endwb_grc(g) - begwb_grc(g)  &
+  					   - (forc_rain_grc(g)  &
+  					   + forc_snow_grc(g)  &
+  					   + forc_flood_grc(g)  &
+  					   + qflx_sfc_irrig_grc(g)  &
+  					   - soilhydrology_inst%Pump_wa_col(g)&
+  					   + qflx_glcice_dyn_water_flux_grc(g)  &
+  					   - qflx_evap_tot_grc(g)  &
+  					   - qflx_surf_grc(g)  &
+  					   - qflx_qrgwl_grc(g)  &
+  					   - qflx_drain_grc(g)  &
+  					   - qflx_drain_perched_grc(g)  &
+  					   - qflx_ice_runoff_grc(g)  &
+  					   - qflx_snwcp_discarded_liq_grc(g)  &
+  					   - qflx_snwcp_discarded_ice_grc(g)) * dtime
+  			   end do
 			   
 		
-		  case(gw_FanLat_Pump, gw_FanLat_TheimPump, gw_Theim_GleesonTransmiss, gw_Fan)
+    		  case(gw_FanLat_Pump, gw_FanLat_TheimPump, gw_Theim_GleesonTransmiss, gw_Fan)
 
-			   do g = bounds%begg, bounds%endg
-				  errh2o_grc(g) = endwb_grc(g) - begwb_grc(g)  &
-					   - (forc_rain_grc(g)  &
-					   + forc_snow_grc(g)  &
-					   + forc_flood_grc(g)  &
-					   + qflx_sfc_irrig_grc(g)  &
-		               - soilhydrology_inst%Pump_wa_col(g)&
-		               + soilhydrology_inst%Qgw_lateral_col(g) &
-					   + qflx_glcice_dyn_water_flux_grc(g)  &
-					   - qflx_evap_tot_grc(g)  &
-					   - qflx_surf_grc(g)  &
-					   - qflx_qrgwl_grc(g)  &
-					   - qflx_drain_grc(g)  &
-					   - qflx_drain_perched_grc(g)  &
-					   - qflx_ice_runoff_grc(g)  &
-					   - qflx_snwcp_discarded_liq_grc(g)  &
-					   - qflx_snwcp_discarded_ice_grc(g)) * dtime
-			   end do
-          case default
-             call endrun(subname // ':: the groundwater scheme must be specified !')
+    			   do g = bounds%begg, bounds%endg
+    				  errh2o_grc(g) = endwb_grc(g) - begwb_grc(g)  &
+    					   - (forc_rain_grc(g)  &
+    					   + forc_snow_grc(g)  &
+    					   + forc_flood_grc(g)  &
+    					   + qflx_sfc_irrig_grc(g)  &
+    		               - soilhydrology_inst%Pump_wa_col(g)&
+    		               + soilhydrology_inst%Qgw_lateral_col(g) &
+    					   + qflx_glcice_dyn_water_flux_grc(g)  &
+    					   - qflx_evap_tot_grc(g)  &
+    					   - qflx_surf_grc(g)  &
+    					   - qflx_qrgwl_grc(g)  &
+    					   - qflx_drain_grc(g)  &
+    					   - qflx_drain_perched_grc(g)  &
+    					   - qflx_ice_runoff_grc(g)  &
+    					   - qflx_snwcp_discarded_liq_grc(g)  &
+    					   - qflx_snwcp_discarded_ice_grc(g)) * dtime
+    			   end do
+              case default
+                 call endrun(subname // ':: the groundwater scheme must be specified !')
 
        end select  ! case for the lower boundary condition				   
 	  
