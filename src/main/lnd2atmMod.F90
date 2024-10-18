@@ -498,7 +498,7 @@ contains
          water_inst%waterdiagnosticbulk_inst%tws_grc(g) + &
          water_inst%wateratm2lndbulk_inst%volr_grc(g) / grc%area(g) * 1.e-3_r8
     enddo
-
+   end associate
   end subroutine lnd2atm
 
   !-----------------------------------------------------------------------

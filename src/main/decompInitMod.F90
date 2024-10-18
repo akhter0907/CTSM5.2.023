@@ -52,6 +52,8 @@ contains
     use clm_varctl , only : nsegspc
     use decompMod  , only : gindex_global, nclumps, clumps
     use decompMod  , only : bounds_type, get_proc_bounds, procinfo
+	use spmdMod,    only : MPI_REAL8, MPI_SUM, mpicom !Tanjila
+	use domainMod , only : ldomain !Tanjila
     !
     ! !ARGUMENTS:
     integer , intent(in) :: amask(:)
@@ -66,12 +68,20 @@ contains
     real(r8):: seglen                 ! average segment length
     real(r8):: rcid                   ! real value of cid
     integer :: cid,pid                ! indices
-    integer :: n,m,ng                 ! indices
+    !integer :: n,m,ng                 ! indices
+	integer :: n,m,ng,g,nc,gdc        ! indices !tanjila
     integer :: ier                    ! error code
     integer :: begg, endg             ! beg and end gridcells
     integer, pointer  :: clumpcnt(:)  ! clump index counter
     integer, allocatable :: gdc2glo(:)! used to create gindex_global
-    type(bounds_type) :: bounds       ! contains subgrid bounds data
+	real(r8), pointer :: G_lat_long(:)              ! latitude array for all grid cells
+	real(r8), pointer :: G_lon_long(:)              ! longitude array for all grid cells
+	real(r8), pointer :: G_lat_glob(:)
+	real(r8), pointer :: G_lon_glob(:)
+	
+    ! Tanjila commented out default type(bounds_type) :: bounds       ! contains subgrid bounds data
+	type(bounds_type) :: bounds_clump
+	integer :: NUMclumps              ! number of clumps on this processor !Tanjila
     !------------------------------------------------------------------------------
 
     lns = lni * lnj
@@ -241,6 +251,8 @@ contains
     ! Set gindex_global
 
     allocate(gdc2glo(numg), stat=ier)
+	allocate(ldecomp%ixy(numg), stat=ier) !Tanjila
+    allocate(ldecomp%jxy(numg), stat=ier) !tanjila
     if (ier /= 0) then
        write(iulog,*) 'decompInit_lnd(): allocation error1 for gdc2glo , etc'
        call endrun(msg=errMsg(sourcefile, __LINE__))
@@ -254,6 +266,9 @@ contains
 
     ! clumpcnt is the start gdc index of each clump
 
+    ldecomp%gdc2glo(:) = 0 !Tanjila
+    ldecomp%ixy(:) = 0 !Tanjila
+    ldecomp%jxy(:) = 0 !Tanjila
     ag = 0
     clumpcnt = 0
     ag = 1
@@ -276,7 +291,10 @@ contains
        if (cid > 0) then
           ag = clumpcnt(cid)
           gdc2glo(ag) = an
-          clumpcnt(cid) = clumpcnt(cid) + 1
+		  ixy(ag) = ai !Tanjila
+		  jxy(ag) = aj !Tanjila
+		  
+		  clumpcnt(cid) = clumpcnt(cid) + 1
        end if
     end do
     end do

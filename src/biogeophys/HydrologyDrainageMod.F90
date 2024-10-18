@@ -7,7 +7,7 @@ module HydrologyDrainageMod
   use shr_kind_mod      , only : r8 => shr_kind_r8
   use shr_log_mod       , only : errMsg => shr_log_errMsg
   use decompMod         , only : bounds_type
-  use clm_varctl        , only : iulog, use_vichydro
+  use clm_varctl        , only : iulog, use_vichydro, use_pumping !Tanjila
   use clm_varcon        , only : denh2o, denice, rpi, spval
   use atm2lndType       , only : atm2lnd_type
   use glc2lndMod        , only : glc2lnd_type
@@ -229,13 +229,14 @@ contains
          l = col%landunit(c)
 
          qflx_runoff(c) = qflx_drain(c) + qflx_surf(c) + qflx_qrgwl(c) + qflx_drain_perched(c)
-         if ((lun%itype(l)==istsoil .or. lun%itype(l)==istcrop) .and. col%active(c)) then
-            if (use_pumping == .true.) then
-               qflx_runoff(c) = qflx_runoff(c) - (1._r8 - GW_ratio(c)) * qflx_irrig(c)
-            else
-               qflx_runoff(c) = qflx_runoff(c) - qflx_irrig(c)
-            end if
-         end if
+		 
+         ! if ((lun%itype(l)==istsoil .or. lun%itype(l)==istcrop) .and. col%active(c)) then !Tanjila: the default CTSM does not adjust for irrigation flux here, need to find that and adjust there
+            ! if (use_pumping == .true.) then !Tanjila
+               ! qflx_runoff(c) = qflx_runoff(c) - (1._r8 - GW_ratio(c)) * qflx_irrig(c)
+            ! else
+               ! qflx_runoff(c) = qflx_runoff(c) - qflx_irrig(c)
+            ! end if
+         ! end if
 
          if (lun%urbpoi(l)) then
             qflx_runoff_u(c) = qflx_runoff(c)

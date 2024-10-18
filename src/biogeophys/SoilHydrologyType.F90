@@ -278,6 +278,7 @@ contains
     
     ! !LOCAL VARIABLES:
     integer            :: c,l
+	real(r8) ,pointer  :: wtd_Fan    (:)   ! read in - WTD !Tanjila
     !-----------------------------------------------------------------------
     ! needs to be initialized to spval to avoid problems when 
     ! averaging for the accum field
@@ -290,6 +291,21 @@ contains
     !-----------------------------------------------------------------------
 
     this%zwt_col(bounds%begc:bounds%endc) = 0._r8
+	!this%wa_col(bounds%begc:bounds%endc)  = aquifer_water_baseline !!check Tanjila
+	!Tanjila
+    this%Qgw_lateral_col(bounds%begc:bounds%endc) = 0._r8
+    this%AqTransmiss_col(bounds%begc:bounds%endc) = 0._r8
+    this%Pump_wa_col(bounds%begc:bounds%endc) = 0._r8
+	
+	
+    allocate(wtd_Fan(bounds%begg:bounds%endg))
+    call getfil (fsurdat, locfn, 0)
+    call ncd_pio_openfile (ncid, locfn, 0)
+
+    call ncd_io(ncid=ncid, varname='WTD', flag='read', data=wtd_Fan, dim1name=grlnd, readvar=readvar)
+    if (.not. readvar) then
+       call endrun(msg=' ERROR: WTD NOT on surfdata file'//errMsg(sourcefile, __LINE__)) 
+    end if	
 
     do c = bounds%begc,bounds%endc
        l = col%landunit(c)
@@ -307,7 +323,8 @@ contains
     
                    ! Note that the following hard-coded constants (on the next line)
                    ! seem implicitly related to the initial value of wa_col
-                   this%zwt_col(c) = (25._r8 + col%zi(c,nlevsoi)) - waterstatebulk_inst%wa_col(c)/0.2_r8 /1000._r8  ! One meter below soil column
+                   ! Tanjila this%zwt_col(c) = (25._r8 + col%zi(c,nlevsoi)) - waterstatebulk_inst%wa_col(c)/0.2_r8 /1000._r8  ! One meter below soil column
+				   this%zwt_col(c) = wtd_Fan(g)
                 else
                    this%zwt_col(c) = col%zi(c,col%nbedrock(c))
                 end if
@@ -329,7 +346,8 @@ contains
     
                 ! Note that the following hard-coded constants (on the next line) seem
                 ! implicitly related to the initial value of wa_col
-                this%zwt_col(c) = (25._r8 + col%zi(c,nlevsoi)) - waterstatebulk_inst%wa_col(c)/0.2_r8 /1000._r8
+                ! Tanjila this%zwt_col(c) = (25._r8 + col%zi(c,nlevsoi)) - waterstatebulk_inst%wa_col(c)/0.2_r8 /1000._r8
+				this%zwt_col(c) = wtd_Fan(g)
              else
                 this%zwt_col(c) = col%zi(c,col%nbedrock(c))
              end if
@@ -340,6 +358,7 @@ contains
           end if
        end if
     end do
+	deallocate(wtd_Fan) !Tanjila
 
   end subroutine InitCold
 
