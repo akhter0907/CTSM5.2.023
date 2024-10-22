@@ -449,9 +449,10 @@ contains
    !-----------------------------------------------------------------------
    subroutine BalanceCheck( bounds, &
         num_allc, filter_allc, &
-        atm2lnd_inst, solarabs_inst, waterflux_inst, soilhydrology_inst, waterstate_inst, &
+        atm2lnd_inst, solarabs_inst, waterflux_inst, waterstate_inst, &
         waterdiagnosticbulk_inst, waterbalance_inst, wateratm2lnd_inst, &
-        waterlnd2atm_inst, surfalb_inst, energyflux_inst, canopystate_inst, irrigation_inst) !Tanjila added
+        waterlnd2atm_inst, surfalb_inst, energyflux_inst, canopystate_inst, &
+        soilhydrology_inst) ! AmanS added
      !
      ! !DESCRIPTION:
      ! This subroutine accumulates the numerical truncation errors of the water
@@ -645,32 +646,31 @@ contains
           ! Groundwater scheme: Default
           case(gw_default)
 
-	          do c = bounds%begc, bounds%endc
+             do c = bounds%begc, bounds%endc
 
-		         ! add qflx_drain_perched and qflx_flood
-	             if (col%active(c)) then
+                ! add qflx_drain_perched and qflx_flood
+                if (col%active(c)) then
+                   errh2o_col(c) = endwb_col(c) - begwb_col(c) &
+                      - (forc_rain_col(c)        &
+                      + forc_snow_col(c)         &
+                      + qflx_flood_col(c)        &
+                      + qflx_sfc_irrig_col(c)    &
+                      - soilhydrology_inst%Pump_wa_col(c)&
+                      + qflx_glcice_dyn_water_flux_col(c) &
+                      - qflx_evap_tot_col(c)     &
+                      - qflx_surf_col(c)         &
+                      - qflx_qrgwl_col(c)        &
+                      - qflx_drain_col(c)        &
+                      - qflx_drain_perched_col(c) &
+                      - qflx_ice_runoff_col(c)   &
+                      - qflx_snwcp_discarded_liq_col(c) &
+                      - qflx_snwcp_discarded_ice_col(c)) * dtime
 
-					 errh2o_col(c) = endwb_col(c) - begwb_col(c) &
-						  - (forc_rain_col(c)        &
-						  + forc_snow_col(c)         &
-							  + qflx_flood_col(c)        &
-						  + qflx_sfc_irrig_col(c)    &
-						  - soilhydrology_inst%Pump_wa_col(c)&
-						  + qflx_glcice_dyn_water_flux_col(c) &
-						  - qflx_evap_tot_col(c)     &
-						  - qflx_surf_col(c)         &
-						  - qflx_qrgwl_col(c)        &
-						  - qflx_drain_col(c)        &
-						  - qflx_drain_perched_col(c) &
-						  - qflx_ice_runoff_col(c)   &
-						  - qflx_snwcp_discarded_liq_col(c) &
-						  - qflx_snwcp_discarded_ice_col(c)) * dtime
-
-  	             else
+                else
                 
-				    errh2o_col(c) = 0.0_r8
+                   errh2o_col(c) = 0.0_r8
 
-		         end if
+                end if
 
               end do
 
@@ -678,33 +678,32 @@ contains
 
                do c = bounds%begc, bounds%endc
 
-		          ! add qflx_drain_perched and qflx_flood
-                  if (col%active(c)) then
+                   ! add qflx_drain_perched and qflx_flood
+                   if (col%active(c)) then
+                      errh2o_col(c) = endwb_col(c) - begwb_col(c) &
+                      - (forc_rain_col(c)        &
+                      + forc_snow_col(c)         &
+                      + qflx_flood_col(c)        &
+                      + qflx_sfc_irrig_col(c)    &
+                      - soilhydrology_inst%Pump_wa_col(c)&
+                      + soilhydrology_inst%Qgw_lateral_col(c) &
+                      + qflx_glcice_dyn_water_flux_col(c) &
+                      - qflx_evap_tot_col(c)     &
+                      - qflx_surf_col(c)         &
+                      - qflx_qrgwl_col(c)        &
+                      - qflx_drain_col(c)        &
+                      - qflx_drain_perched_col(c) &
+                      - qflx_ice_runoff_col(c)   &
+                      - qflx_snwcp_discarded_liq_col(c) &
+                      - qflx_snwcp_discarded_ice_col(c)) * dtime
 
-					 errh2o_col(c) = endwb_col(c) - begwb_col(c) &
-						  - (forc_rain_col(c)        &
-						  + forc_snow_col(c)         &
-						  + qflx_flood_col(c)        &
-						  + qflx_sfc_irrig_col(c)    &
-						  - soilhydrology_inst%Pump_wa_col(c)&
-						  + soilhydrology_inst%Qgw_lateral_col(c) &
-						  + qflx_glcice_dyn_water_flux_col(c) &
-						  - qflx_evap_tot_col(c)     &
-						  - qflx_surf_col(c)         &
-						  - qflx_qrgwl_col(c)        &
-						  - qflx_drain_col(c)        &
-						  - qflx_drain_perched_col(c) &
-						  - qflx_ice_runoff_col(c)   &
-						  - qflx_snwcp_discarded_liq_col(c) &
-						  - qflx_snwcp_discarded_ice_col(c)) * dtime
+                   else
 
-	             else
+                      errh2o_col(c) = 0.0_r8
 
-	                errh2o_col(c) = 0.0_r8
+                   end if
 
-	             end if
-
-	          end do
+               end do
 
           case default
              call endrun(subname // ':: the groundwater scheme must be specified !')
@@ -778,56 +777,56 @@ contains
          qflx_snwcp_discarded_ice_col(bounds%begc:bounds%endc),  &
          qflx_snwcp_discarded_ice_grc(bounds%begg:bounds%endg),  &
          c2l_scale_type= 'urbanf', l2g_scale_type='unity' )
-		 
-		 
-	   select case(groundwater_scheme)
+       
+       
+       select case(groundwater_scheme)
 
           ! Groundwater scheme: Default
           case(gw_default)
 
-  			   do g = bounds%begg, bounds%endg
-  				  errh2o_grc(g) = endwb_grc(g) - begwb_grc(g)  &
-  					   - (forc_rain_grc(g)  &
-  					   + forc_snow_grc(g)  &
-  					   + forc_flood_grc(g)  &
-  					   + qflx_sfc_irrig_grc(g)  &
-  					   - soilhydrology_inst%Pump_wa_col(g)&
-  					   + qflx_glcice_dyn_water_flux_grc(g)  &
-  					   - qflx_evap_tot_grc(g)  &
-  					   - qflx_surf_grc(g)  &
-  					   - qflx_qrgwl_grc(g)  &
-  					   - qflx_drain_grc(g)  &
-  					   - qflx_drain_perched_grc(g)  &
-  					   - qflx_ice_runoff_grc(g)  &
-  					   - qflx_snwcp_discarded_liq_grc(g)  &
-  					   - qflx_snwcp_discarded_ice_grc(g)) * dtime
-  			   end do
-		
-    	  case(gw_FanLat_Pump, gw_FanLat_TheimPump, gw_Theim_GleesonTransmiss, gw_Fan)
+              do g = bounds%begg, bounds%endg
+                  errh2o_grc(g) = endwb_grc(g) - begwb_grc(g)  &
+                      - (forc_rain_grc(g)  &
+                      + forc_snow_grc(g)  &
+                      + forc_flood_grc(g)  &
+                      + qflx_sfc_irrig_grc(g)  &
+                      - soilhydrology_inst%Pump_wa_col(g)&
+                      + qflx_glcice_dyn_water_flux_grc(g)  &
+                      - qflx_evap_tot_grc(g)  &
+                      - qflx_surf_grc(g)  &
+                      - qflx_qrgwl_grc(g)  &
+                      - qflx_drain_grc(g)  &
+                      - qflx_drain_perched_grc(g)  &
+                      - qflx_ice_runoff_grc(g)  &
+                      - qflx_snwcp_discarded_liq_grc(g)  &
+                      - qflx_snwcp_discarded_ice_grc(g)) * dtime
+              end do
+      
+          case(gw_FanLat_Pump, gw_FanLat_TheimPump, gw_Theim_GleesonTransmiss, gw_Fan)
 
-    		   do g = bounds%begg, bounds%endg
-    			  errh2o_grc(g) = endwb_grc(g) - begwb_grc(g)  &
-    				   - (forc_rain_grc(g)  &
-    				   + forc_snow_grc(g)  &
-    				   + forc_flood_grc(g)  &
-    				   + qflx_sfc_irrig_grc(g)  &
-    		           - soilhydrology_inst%Pump_wa_col(g)&
-    		           + soilhydrology_inst%Qgw_lateral_col(g) &
-    				   + qflx_glcice_dyn_water_flux_grc(g)  &
-    				   - qflx_evap_tot_grc(g)  &
-    				   - qflx_surf_grc(g)  &
-    				   - qflx_qrgwl_grc(g)  &
-    				   - qflx_drain_grc(g)  &
-    				   - qflx_drain_perched_grc(g)  &
-    				   - qflx_ice_runoff_grc(g)  &
-    				   - qflx_snwcp_discarded_liq_grc(g)  &
-    				   - qflx_snwcp_discarded_ice_grc(g)) * dtime
-    		   end do
+               do g = bounds%begg, bounds%endg
+                  errh2o_grc(g) = endwb_grc(g) - begwb_grc(g)  &
+                      - (forc_rain_grc(g)  &
+                      + forc_snow_grc(g)  &
+                      + forc_flood_grc(g)  &
+                      + qflx_sfc_irrig_grc(g)  &
+                      - soilhydrology_inst%Pump_wa_col(g)&
+                      + soilhydrology_inst%Qgw_lateral_col(g) &
+                      + qflx_glcice_dyn_water_flux_grc(g)  &
+                      - qflx_evap_tot_grc(g)  &
+                      - qflx_surf_grc(g)  &
+                      - qflx_qrgwl_grc(g)  &
+                      - qflx_drain_grc(g)  &
+                      - qflx_drain_perched_grc(g)  &
+                      - qflx_ice_runoff_grc(g)  &
+                      - qflx_snwcp_discarded_liq_grc(g)  &
+                      - qflx_snwcp_discarded_ice_grc(g)) * dtime
+               end do
           case default
              call endrun(subname // ':: the groundwater scheme must be specified !')
 
-       end select  ! case for the lower boundary condition				   
-	  
+       end select  ! case for the lower boundary condition
+     
        ! add landunit level flux variable, convert from (m3/s) to (kg m-2 s-1)
        if (use_hillslope_routing) then
           ! output water flux from streamflow (+)
@@ -854,12 +853,12 @@ contains
 
              write(iulog,*)'CTSM is stopping because errh2o > ', error_thresh, ' mm'
              write(iulog,*)'soilhydrology_inst%zwt_col= ',soilhydrology_inst%zwt_col(indexg)
-			 write(iulog,*)'soilhydrology_inst%wa_col = ',soilhydrology_inst%wa_col(indexg)
-			 write(iulog,*)'nstep                     = ',nstep
+             write(iulog,*)'soilhydrology_inst%wa_col = ',soilhydrology_inst%wa_col(indexg)
+             write(iulog,*)'nstep                     = ',nstep
              write(iulog,*)'errh2o_grc                = ',errh2o_grc(indexg)
              write(iulog,*)'forc_rain                 = ',forc_rain_grc(indexg)*dtime
              write(iulog,*)'forc_snow                 = ',forc_snow_grc(indexg)*dtime
-			 write(iulog,*)'lateralflow               = ',soilhydrology_inst%Qgw_lateral_col(indexg)*dtime
+             write(iulog,*)'lateralflow               = ',soilhydrology_inst%Qgw_lateral_col(indexg)*dtime
              write(iulog,*)'Pump_wa_col               = ',soilhydrology_inst%Pump_wa_col(indexg)*dtime
              write(iulog,*)'endwb_grc                 = ',endwb_grc(indexg)
              write(iulog,*)'begwb_grc                 = ',begwb_grc(indexg)

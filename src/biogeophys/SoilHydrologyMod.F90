@@ -686,7 +686,7 @@ contains
      use GridcellType     , only : grc
      use GroundwaterMod   , only : groundwater_type
      use abortutils       , only : endrun
-     use spmdMod        , only : masterproc
+     use spmdMod          , only : masterproc
      !
      type(groundwater_type)                   :: groundwater_inst
 
@@ -747,7 +747,7 @@ contains
      integer  :: time                     ! time at start of time step (seconds after 0Z)
      integer  :: year       ! year (0, ...) for nstep
      integer  :: month      ! month (1, ..., 12) for nstep
-     integer :: secs       ! seconds into current date for nstep
+     integer  :: secs       ! seconds into current date for nstep
      character(*), parameter    :: subname = "('WaterTable')"
      !-----------------------------------------------------------------------
 

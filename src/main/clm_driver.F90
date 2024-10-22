@@ -1350,7 +1350,7 @@ contains
             water_inst%waterstatebulk_inst, water_inst%waterdiagnosticbulk_inst, &
             water_inst%waterbalancebulk_inst, water_inst%wateratm2lndbulk_inst, &
             water_inst%waterlnd2atmbulk_inst, surfalb_inst, energyflux_inst, &
-            canopystate_inst)
+            canopystate_inst, soilhydrology_inst)
     end do
     !$OMP END PARALLEL DO
     call t_stopf('balchk')

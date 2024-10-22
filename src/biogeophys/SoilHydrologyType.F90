@@ -193,7 +193,7 @@ contains
        call hist_addfld1d (fname='QCHARGE',  units='mm/s',  &
             avgflag='A', long_name='aquifer recharge rate (natural vegetated and crop landunits only)', &
             ptr_col=this%qcharge_col, l2g_scale_type='veg')
-!Tanjila added 
+       !Tanjila added 
        this%wa_col(begc:endc) = spval
        call hist_addfld1d (fname='WA',  units='mm',  &
             avgflag='A', long_name='water in the unconfined aquifer (vegetated landunits only)', &
@@ -278,7 +278,7 @@ contains
     
     ! !LOCAL VARIABLES:
     integer            :: c,l
-	real(r8) ,pointer  :: wtd_Fan    (:)   ! read in - WTD !Tanjila
+    real(r8) ,pointer  :: wtd_Fan    (:)   ! read in - WTD !Tanjila
     !-----------------------------------------------------------------------
     ! needs to be initialized to spval to avoid problems when 
     ! averaging for the accum field
@@ -291,8 +291,8 @@ contains
     !-----------------------------------------------------------------------
 
     this%zwt_col(bounds%begc:bounds%endc) = 0._r8
-	!this%wa_col(bounds%begc:bounds%endc)  = aquifer_water_baseline !!check Tanjila
-	!Tanjila
+    !this%wa_col(bounds%begc:bounds%endc)  = aquifer_water_baseline !!check Tanjila
+    !Tanjila
     this%Qgw_lateral_col(bounds%begc:bounds%endc) = 0._r8
     this%AqTransmiss_col(bounds%begc:bounds%endc) = 0._r8
     this%Pump_wa_col(bounds%begc:bounds%endc) = 0._r8
@@ -324,7 +324,7 @@ contains
                    ! Note that the following hard-coded constants (on the next line)
                    ! seem implicitly related to the initial value of wa_col
                    ! Tanjila this%zwt_col(c) = (25._r8 + col%zi(c,nlevsoi)) - waterstatebulk_inst%wa_col(c)/0.2_r8 /1000._r8  ! One meter below soil column
-				   this%zwt_col(c) = wtd_Fan(g)
+                   this%zwt_col(c) = wtd_Fan(g)
                 else
                    this%zwt_col(c) = col%zi(c,col%nbedrock(c))
                 end if
@@ -347,7 +347,9 @@ contains
                 ! Note that the following hard-coded constants (on the next line) seem
                 ! implicitly related to the initial value of wa_col
                 ! Tanjila this%zwt_col(c) = (25._r8 + col%zi(c,nlevsoi)) - waterstatebulk_inst%wa_col(c)/0.2_r8 /1000._r8
-				this%zwt_col(c) = wtd_Fan(g)
+                this%zwt_col(c) = wtd_Fan(g)
+                ! Aman
+                ! write(*,*) 'Felfelani      WTD Fan et al soilhydrology_inst%zwt_col(c), wtd_Fan(g)', soilhydrology_inst%zwt_col(c), wtd_Fan(g)
              else
                 this%zwt_col(c) = col%zi(c,col%nbedrock(c))
              end if
@@ -387,7 +389,7 @@ contains
     if (flag == 'read' .and. .not. readvar) then
        this%frost_table_col(bounds%begc:bounds%endc) = col%zi(bounds%begc:bounds%endc,nlevsoi)
     end if
-!Tanjila added
+    !Tanjila added
 
     call restartvar(ncid=ncid, flag=flag, varname='WA', xtype=ncd_double,  & 
          dim1name='column', &
@@ -418,7 +420,7 @@ contains
          dim1name='gridcell', &
          long_name='Eastward groundwater lateral flow', units='mm', &
          interpinic_flag='skip', readvar=readvar, data=this%QlatField_easting_grc)
- !Tanjila added ends        
+    !Tanjila added ends        
     call restartvar(ncid=ncid, flag=flag, varname='ZWT', xtype=ncd_double,  & 
          dim1name='column', &
          long_name='water table depth', units='m', &
