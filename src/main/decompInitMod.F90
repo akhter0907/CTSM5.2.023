@@ -52,8 +52,7 @@ contains
     use clm_varctl , only : nsegspc
     use decompMod  , only : gindex_global, nclumps, clumps
     use decompMod  , only : bounds_type, get_proc_bounds, procinfo
-	use spmdMod,    only : MPI_REAL8, MPI_SUM, mpicom !Tanjila
-	use domainMod , only : ldomain !Tanjila
+
     !
     ! !ARGUMENTS:
     integer , intent(in) :: amask(:)
@@ -68,20 +67,28 @@ contains
     real(r8):: seglen                 ! average segment length
     real(r8):: rcid                   ! real value of cid
     integer :: cid,pid                ! indices
-    !integer :: n,m,ng                 ! indices
-	integer :: n,m,ng,g,nc,gdc        ! indices !tanjila
+    integer :: n,m,ng                 ! indices
     integer :: ier                    ! error code
     integer :: begg, endg             ! beg and end gridcells
     integer, pointer  :: clumpcnt(:)  ! clump index counter
     integer, allocatable :: gdc2glo(:)! used to create gindex_global
-	real(r8), pointer :: G_lat_long(:)              ! latitude array for all grid cells
-	real(r8), pointer :: G_lon_long(:)              ! longitude array for all grid cells
-	real(r8), pointer :: G_lat_glob(:)
-	real(r8), pointer :: G_lon_glob(:)
-	
-    ! Tanjila commented out default type(bounds_type) :: bounds       ! contains subgrid bounds data
-	type(bounds_type) :: bounds_clump
-	integer :: NUMclumps              ! number of clumps on this processor !Tanjila
+	!Tanjila
+    integer,pointer :: ixy(:)        ! FFelfelani Comment: i and j indices
+    integer,pointer :: jxy(:)        ! relative to the grid cell vector
+    integer,pointer :: gtop(:)       ! gridcell index of the top neighbor
+    integer,pointer :: gbot(:)       ! gridcell index of the bottom neighbor
+    integer,pointer :: glft(:)       ! gridcell index of the left neighbor
+    integer,pointer :: grgt(:)       ! gridcell index of the right neighbor
+    integer,pointer :: gtoplft(:)       ! gridcell index of the right neighbor
+    integer,pointer :: gtoprgt(:)       ! gridcell index of the right neighbor
+    integer,pointer :: gbotlft(:)       ! gridcell index of the right neighbor
+    integer,pointer :: gbotrgt(:)       ! gridcell index of the right neighbor
+    real(r8),pointer:: gneighbors(:) ! total number of neighbors
+    real(r8),pointer:: glat(:)       ! latitude of the the cell g --- global array
+    real(r8),pointer::	glon(:)       ! longitude of the the cell g --- global array 
+	!Tanjila
+    type(bounds_type) :: bounds       ! contains subgrid bounds data
+
     !------------------------------------------------------------------------------
 
     lns = lni * lnj
@@ -251,13 +258,15 @@ contains
     ! Set gindex_global
 
     allocate(gdc2glo(numg), stat=ier)
-	allocate(ldecomp%ixy(numg), stat=ier) !Tanjila
-    allocate(ldecomp%jxy(numg), stat=ier) !tanjila
+	allocate(ixy(numg), stat=ier)   !Tanjila
+    allocate(jxy(numg), stat=ier)     !Tanjila
     if (ier /= 0) then
        write(iulog,*) 'decompInit_lnd(): allocation error1 for gdc2glo , etc'
        call endrun(msg=errMsg(sourcefile, __LINE__))
     end if
     gdc2glo(:) = 0
+	ixy(:) = 0   !Tanjila
+	jxy(:) = 0   !Tanjila
     allocate(clumpcnt(nclumps),stat=ier)
     if (ier /= 0) then
        write(iulog,*) 'decompInit_lnd(): allocation error1 for clumpcnt'
@@ -266,9 +275,7 @@ contains
 
     ! clumpcnt is the start gdc index of each clump
 
-    ldecomp%gdc2glo(:) = 0 !Tanjila
-    ldecomp%ixy(:) = 0 !Tanjila
-    ldecomp%jxy(:) = 0 !Tanjila
+
     ag = 0
     clumpcnt = 0
     ag = 1
@@ -290,16 +297,15 @@ contains
        cid = lcid(an)
        if (cid > 0) then
           ag = clumpcnt(cid)
-          gdc2glo(ag) = an
-		  ixy(ag) = ai !Tanjila
-		  jxy(ag) = aj !Tanjila
-		  
+          gdc2glo(ag) = an	
+		  ixy(ag) = ai  !Tanjila
+		  jxy(ag) = aj   !Tanjila
 		  clumpcnt(cid) = clumpcnt(cid) + 1
        end if
     end do
     end do
 
-    ! Initialize global gindex (non-compressed, includes ocean points)
+    ! Initialize global gindex (non-compressed, includes ocean points) !Tanjila check
     ! Note that gindex_global goes from (1:endg)
     nglob_x = lni !  decompMod module variables
     nglob_y = lnj !  decompMod module variables

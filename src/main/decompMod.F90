@@ -46,6 +46,7 @@ module decompMod
   public :: get_subgrid_level_from_name ! Given a name like nameg, return a subgrid level index like subgrid_level_gridcell
   public :: get_subgrid_level_gsize     ! get global size associated with subgrid_level
   public :: get_subgrid_level_gindex    ! get global index array associated with subgrid_level
+  
 
   ! !PRIVATE MEMBER FUNCTIONS:
   !
@@ -97,26 +98,6 @@ module decompMod
   end type clump_type
   public clump_type
   type(clump_type),public, allocatable :: clumps(:)
-!Tanjila  
-  type decomp_type
-     integer,pointer :: gdc2glo(:)    ! 1d gdc to 1d glo
-     integer,pointer :: ixy(:)        ! FFelfelani Comment: i and j indices
-     integer,pointer :: jxy(:)        ! relative to the grid cell vector
-     integer,pointer :: gtop(:)       ! gridcell index of the top neighbor
-     integer,pointer :: gbot(:)       ! gridcell index of the bottom neighbor
-     integer,pointer :: glft(:)       ! gridcell index of the left neighbor
-     integer,pointer :: grgt(:)       ! gridcell index of the right neighbor
-     integer,pointer :: gtoplft(:)       ! gridcell index of the right neighbor
-     integer,pointer :: gtoprgt(:)       ! gridcell index of the right neighbor
-     integer,pointer :: gbotlft(:)       ! gridcell index of the right neighbor
-     integer,pointer :: gbotrgt(:)       ! gridcell index of the right neighbor
-     real(r8),pointer:: gneighbors(:) ! total number of neighbors
-     real(r8),pointer:: glat(:)       ! latitude of the the cell g --- global array
-     real(r8),pointer::	glon(:)       ! longitude of the the cell g --- global array 
-  end type decomp_type
-  public decomp_type
-  type(decomp_type),public,target :: ldecomp
-!Tanjila
 
   ! ---global sizes
   integer,public :: nclumps          ! total number of clumps across all processors

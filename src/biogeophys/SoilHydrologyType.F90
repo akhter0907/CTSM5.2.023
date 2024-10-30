@@ -269,6 +269,10 @@ contains
       use_aquifer_layer)
     !
     ! !USES:
+	use fileutils       , only : getfil !Tanjila
+	use ncdio_pio       , only : file_desc_t, ncd_io, ncd_pio_openfile, ncd_pio_closefile !Tanjila
+	use clm_varctl      , only : fsurdat !Tanjila
+	use clm_varcon      , only : grlnd !Tanjila
     !
     ! !ARGUMENTS:
     class(soilhydrology_type)                 :: this
@@ -277,8 +281,11 @@ contains
     logical                   , intent(in)    :: use_aquifer_layer ! whether an aquifer layer is used in this run
     
     ! !LOCAL VARIABLES:
-    integer            :: c,l
+    integer            :: c,l,g !Tanjila
 	real(r8) ,pointer  :: wtd_Fan    (:)   ! read in - WTD !Tanjila
+	logical            :: readvar !Tanjila
+	type(file_desc_t)  :: ncid !Tanjila
+	character(len=256) :: locfn  !Tanjila
     !-----------------------------------------------------------------------
     ! needs to be initialized to spval to avoid problems when 
     ! averaging for the accum field
