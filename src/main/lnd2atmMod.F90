@@ -468,8 +468,8 @@ contains
         if ((lun%itype(l)==istsoil .or. lun%itype(l)==istcrop) .and. col%active(c)) then
              qflx_adjusted_irrig_col(c) = (1._r8 - GW_ratio(c)) * &
                water_inst%waterfluxbulk_inst%qflx_sfc_irrig_col(c)    ! AmanS: qflx_sfc_irrig belongs in waterfluxbulk_inst
-                !if (nstep == 300 .and. (irrigation_inst%qflx_sfc_irrig_col(c) .ne. 0._r8)) write(*,*) 'c1, g, lat, lon: ', c, g, grc%latdeg(g), grc%londeg(g)
-                !if (nstep == 300 .and. (irrigation_inst%qflx_sfc_irrig_col(c) .ne. 0._r8)) write(*,*) GW_ratio(c), irrigation_inst%qflx_sfc_irrig_col(c), qflx_adjusted_irrig_col(c)
+                !if (nstep == 300 .and. (water_inst%waterfluxbulk_inst%qflx_sfc_irrig_col(c) .ne. 0._r8)) write(*,*) 'c1, g, lat, lon: ', c, g, grc%latdeg(g), grc%londeg(g)
+                !if (nstep == 300 .and. (water_inst%waterfluxbulk_inst%qflx_sfc_irrig_col(c) .ne. 0._r8)) write(*,*) GW_ratio(c), water_inst%waterfluxbulk_inst%qflx_sfc_irrig_col(c), qflx_adjusted_irrig_col(c)
         end if
     end do
     ! AmanS: qflx_adjusted_irrig_col is a local variable

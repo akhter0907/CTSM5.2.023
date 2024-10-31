@@ -26,6 +26,7 @@ module GroundwaterMod
   !   I added residual lateral flow (when >0) to the sub-surface runoff
   !
   ! !USES:
+  use IrrigationMod     , only : irrigation_type
 #include "shr_assert.h"
   use shr_kind_mod      , only : r8 => shr_kind_r8
   use decompMod         , only : bounds_type, get_proc_global
