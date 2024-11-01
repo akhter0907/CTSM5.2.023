@@ -451,7 +451,8 @@ contains
         num_allc, filter_allc, &
         atm2lnd_inst, solarabs_inst, waterflux_inst, soilhydrology_inst, waterstate_inst, &
         waterdiagnosticbulk_inst, waterbalance_inst, wateratm2lnd_inst, &
-        waterlnd2atm_inst, surfalb_inst, energyflux_inst, canopystate_inst') !Tanjila added
+        waterlnd2atm_inst, surfalb_inst, energyflux_inst, canopystate_inst) 
+	 !Tanjila added args
      !
      ! !DESCRIPTION:
      ! This subroutine accumulates the numerical truncation errors of the water

@@ -91,11 +91,11 @@ contains
 
     ! !USES:
     use spmdMod         , only : MPI_REAL8, MPI_SUM, mpicom, MPI_INTEGER
-    use decompMod       , only : get_proc_global
+    use decompMod       , only : ldecomp, get_proc_global !Tanjila added ldecomp back
     use shr_const_mod   , only : SHR_CONST_PI
     use GridcellType    , only : grc
     use clm_time_manager, only : get_step_size, get_curr_date, get_nstep
-    use landunit_varcon , only : istwet, istsoil, istice_mec, istcrop
+    use landunit_varcon , only : istwet, istsoil, istice, istcrop !Tanjila changed ISTICE_MEC to ISTICE
 
     ! !ARGUMENTS:
     class(groundwater_type)  , intent(inout) :: this
@@ -396,71 +396,71 @@ contains
           ! The GW lateral flow is ruled by Darcy's
           if (ZeroHydroCell_glob(g)== 0) then
 
-             if (gtoplft(g) <= ng .and. gtoplft(g) >= 1 .and. ZeroHydroCell_glob(gtoplft(g)) == 0) then
-                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(gtoplft(g)))/2._r8
-                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(gtoplft(g)))) * km_to_mm * sqrt(2._r8) / 2._r8
-                 deltaxMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(gtoplft(g)))) * km_to_mm / 2._r8
+             if (ldecomp%gtoplft(g) <= ng .and. ldecomp%gtoplft(g) >= 1 .and. ZeroHydroCell_glob(ldecomp%gtoplft(g)) == 0) then
+                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(ldecomp%gtoplft(g)))/2._r8
+                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gtoplft(g)))) * km_to_mm * sqrt(2._r8) / 2._r8
+                 deltaxMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gtoplft(g)))) * km_to_mm / 2._r8
                  widMean = deltaxMean * sqrt(0.5_r8 * tan(rpi/8._r8))
-                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(gtoplft(g))) * m_to_mm * dtime / lenMean
+                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%gtoplft(g))) * m_to_mm * dtime / lenMean
 
              end if
 
-             if (gtop(g) <= ng .and. gtop(g) >= 1 .and. ZeroHydroCell_glob(gtop(g)) == 0) then
-                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(gtop(g)))/2._r8
-                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(gtop(g)))) * km_to_mm / 2._r8
+             if (ldecomp%gtop(g) <= ng .and. ldecomp%gtop(g) >= 1 .and. ZeroHydroCell_glob(ldecomp%gtop(g)) == 0) then
+                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(ldecomp%gtop(g)))/2._r8
+                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gtop(g)))) * km_to_mm / 2._r8
                  widMean = lenMean * sqrt(0.5_r8 * tan(rpi/8._r8))
-                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(gtop(g))) * m_to_mm * dtime / lenMean
+                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%gtop(g))) * m_to_mm * dtime / lenMean
 
              end if
 
-             if (gtoprgt(g) <= ng .and. gtoprgt(g) >= 1 .and. ZeroHydroCell_glob(gtoprgt(g)) == 0) then
-                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(gtoprgt(g)))/2._r8
-                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(gtoprgt(g)))) * km_to_mm * sqrt(2._r8) / 2._r8
-                 deltaxMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(gtoprgt(g)))) * km_to_mm / 2._r8
+             if (ldecomp%gtoprgt(g) <= ng .and. ldecomp%gtoprgt(g) >= 1 .and. ZeroHydroCell_glob(ldecomp%gtoprgt(g)) == 0) then
+                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(ldecomp%gtoprgt(g)))/2._r8
+                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gtoprgt(g)))) * km_to_mm * sqrt(2._r8) / 2._r8
+                 deltaxMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gtoprgt(g)))) * km_to_mm / 2._r8
                  widMean = deltaxMean * sqrt(0.5_r8 * tan(rpi/8._r8))
-                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(gtoprgt(g))) * m_to_mm * dtime / lenMean
+                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%gtoprgt(g))) * m_to_mm * dtime / lenMean
 
              end if
 
-             if (grgt(g) <= ng .and. grgt(g) >= 1 .and. ZeroHydroCell_glob(grgt(g)) == 0) then
-                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(grgt(g)))/2._r8
-                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(grgt(g)))) * km_to_mm / 2._r8
+             if (ldecomp%grgt(g) <= ng .and. ldecomp%grgt(g) >= 1 .and. ZeroHydroCell_glob(ldecomp%grgt(g)) == 0) then
+                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(ldecomp%grgt(g)))/2._r8
+                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%grgt(g)))) * km_to_mm / 2._r8
                  widMean = lenMean * sqrt(0.5_r8 * tan(rpi/8._r8))
-                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(grgt(g))) * m_to_mm * dtime / lenMean
+                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%grgt(g))) * m_to_mm * dtime / lenMean
 
              end if	
 
-             if (gbotrgt(g) <= ng .and. gbotrgt(g) >= 1 .and. ZeroHydroCell_glob(gbotrgt(g)) == 0) then
-                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(gbotrgt(g)))/2._r8
-                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(gbotrgt(g)))) * km_to_mm * sqrt(2._r8) / 2._r8
-                 deltaxMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(gbotrgt(g)))) * km_to_mm / 2._r8
+             if (ldecomp%gbotrgt(g) <= ng .and. ldecomp%gbotrgt(g) >= 1 .and. ZeroHydroCell_glob(ldecomp%gbotrgt(g)) == 0) then
+                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(ldecomp%gbotrgt(g)))/2._r8
+                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gbotrgt(g)))) * km_to_mm * sqrt(2._r8) / 2._r8
+                 deltaxMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gbotrgt(g)))) * km_to_mm / 2._r8
                  widMean = deltaxMean * sqrt(0.5_r8 * tan(rpi/8._r8))
-                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(gbotrgt(g))) * m_to_mm * dtime / lenMean
+                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%gbotrgt(g))) * m_to_mm * dtime / lenMean
 
              end if
 
-             if (gbot(g) <= ng .and. gbot(g) >= 1 .and. ZeroHydroCell_glob(gbot(g)) == 0) then
-                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(gbot(g)))/2._r8
-                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(gbot(g)))) * km_to_mm / 2._r8
+             if (ldecomp%gbot(g) <= ng .and. ldecomp%gbot(g) >= 1 .and. ZeroHydroCell_glob(ldecomp%gbot(g)) == 0) then
+                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(ldecomp%gbot(g)))/2._r8
+                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gbot(g)))) * km_to_mm / 2._r8
                  widMean = lenMean * sqrt(0.5_r8 * tan(rpi/8._r8))
-                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(gbot(g))) * m_to_mm * dtime / lenMean
+                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%gbot(g))) * m_to_mm * dtime / lenMean
 
              end if
 
-             if (gbotlft(g) <= ng .and. gbotlft(g) >= 1 .and. ZeroHydroCell_glob(gbotlft(g)) == 0) then
-                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(gbotlft(g)))/2._r8
-                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(gbotlft(g)))) * km_to_mm * sqrt(2._r8) / 2._r8
-                 deltaxMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(gbotlft(g)))) * km_to_mm / 2._r8
+             if (ldecomp%gbotlft(g) <= ng .and. ldecomp%gbotlft(g) >= 1 .and. ZeroHydroCell_glob(ldecomp%gbotlft(g)) == 0) then
+                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(ldecomp%gbotlft(g)))/2._r8
+                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gbotlft(g)))) * km_to_mm * sqrt(2._r8) / 2._r8
+                 deltaxMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gbotlft(g)))) * km_to_mm / 2._r8
                  widMean = deltaxMean * sqrt(0.5_r8 * tan(rpi/8._r8))
-                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(gbotlft(g))) * m_to_mm * dtime / lenMean
+                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%gbotlft(g))) * m_to_mm * dtime / lenMean
 
              end if
 
-             if (glft(g) <= ng .and. glft(g) >= 1 .and. ZeroHydroCell_glob(glft(g)) == 0) then
-                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(glft(g)))/2._r8
-                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(glft(g)))) * km_to_mm / 2._r8
+             if (ldecomp%glft(g) <= ng .and. ldecomp%glft(g) >= 1 .and. ZeroHydroCell_glob(ldecomp%glft(g)) == 0) then
+                 AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(ldecomp%glft(g)))/2._r8
+                 lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%glft(g)))) * km_to_mm / 2._r8
                  widMean = lenMean * sqrt(0.5_r8 * tan(rpi/8._r8))
-                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(glft(g))) * m_to_mm * dtime / lenMean
+                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%glft(g))) * m_to_mm * dtime / lenMean
 
              end if
 
@@ -614,11 +614,11 @@ contains
 
     ! !USES:
     use spmdMod         , only : MPI_REAL8, MPI_SUM, mpicom, MPI_INTEGER
-    use decompMod       , only : get_proc_global
+    use decompMod       , only : ldecomp, get_proc_global !Tanjila added ldecomp back
     use shr_const_mod   , only : SHR_CONST_PI
     use GridcellType    , only : grc
     use clm_time_manager, only : get_step_size, get_curr_date, get_nstep
-    use landunit_varcon , only : istwet, istsoil, istice_mec, istcrop
+    use landunit_varcon , only : istwet, istsoil, istice, istcrop !Tanjila changed ISTICE_MEC to ISTICE
 
     ! !ARGUMENTS:
     class(groundwater_type)  , intent(inout) :: this

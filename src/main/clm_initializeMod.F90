@@ -33,7 +33,6 @@ module clm_initializeMod
   use SelfTestDriver        , only : self_test_driver
   use SoilMoistureStreamMod , only : PrescribedSoilMoistureInit
   use clm_instMod
-  use decompInitMod                 , only : decompInit_lnd, decompInit_clumps, decompInit_glcp !Tanjila
   !
   implicit none
   private  ! By default everything is private
@@ -65,11 +64,11 @@ contains
     use initGridCellsMod     , only: initGridCells
     use UrbanParamsType      , only: IsSimpleBuildTemp
     use dynSubgridControlMod , only: dynSubgridControl_init
-	use spmdMod , only : MPI_REAL8, MPI_SUM, mpicom  !Tanjila
     use SoilBiogeochemDecompCascadeConType , only : decomp_cascade_par_init
     use CropReprPoolsMod     , only: crop_repr_pools_init
     use HillslopeHydrologyMod, only: hillslope_properties_init
-
+	use spmdMod , only : MPI_REAL8, MPI_SUM, mpicom  !Tanjila
+    use decompMod        , only : ldecomp !Tanjila added ldecomp back
     !
     ! !ARGUMENTS
     integer, intent(in) :: dtime    ! model time step (seconds)
@@ -96,6 +95,7 @@ contains
     integer , pointer :: G_top_long(:)
     integer , pointer :: G_bot_long(:)
     integer , pointer :: G_lft_long(:)
+	integer , pointer :: G_rgt_long(:)
 	!Tanjila
     !-----------------------------------------------------------------------
 
@@ -156,35 +156,35 @@ contains
     ! G_rgt_long(:)  = 0
 	
     ! Set ldecomp
-	allocate(glat(ngrc), stat=ier)
-    allocate(glon(ngrc), stat=ier)
+	allocate(ldecomp%glat(ngrc), stat=ier)
+    allocate(ldecomp%glon(ngrc), stat=ier)
 	
-    allocate(gtop(ngrc), stat=ier)
-    allocate(gbot(ngrc), stat=ier)
-    allocate(glft(ngrc), stat=ier)
-    allocate(grgt(ngrc), stat=ier)
+    allocate(ldecomp%gtop(ngrc), stat=ier)
+    allocate(ldecomp%gbot(ngrc), stat=ier)
+    allocate(ldecomp%glft(ngrc), stat=ier)
+    allocate(ldecomp%grgt(ngrc), stat=ier)
 
-    allocate(gtoplft(ngrc), stat=ier)
-    allocate(gtoprgt(ngrc), stat=ier)
-    allocate(gbotlft(ngrc), stat=ier)
-    allocate(gbotrgt(ngrc), stat=ier)
+    allocate(ldecomp%gtoplft(ngrc), stat=ier)
+    allocate(ldecomp%gtoprgt(ngrc), stat=ier)
+    allocate(ldecomp%gbotlft(ngrc), stat=ier)
+    allocate(ldecomp%gbotrgt(ngrc), stat=ier)
 	
     allocate(ldecomp%gneighbors(ngrc), stat=ier)
 	
-    glat(:) = 0._r8
-    glon(:) = 0._r8
+    ldecomp%glat(:) = 0._r8
+    ldecomp%glon(:) = 0._r8
 
-    gneighbors(:) = 0._r8
+    ldecomp%gneighbors(:) = 0._r8
 	
-    gtop(:) = 0
-    gbot(:) = 0
-    glft(:) = 0
-    grgt(:) = 0
+    ldecomp%gtop(:) = 0
+    ldecomp%gbot(:) = 0
+    ldecomp%glft(:) = 0
+    ldecomp%grgt(:) = 0
 
-    gtoplft(:) = 0
-    gtoprgt(:) = 0
-    gbotlft(:) = 0
-    gbotrgt(:) = 0
+    ldecomp%gtoplft(:) = 0
+    ldecomp%gtoprgt(:) = 0
+    ldecomp%gbotlft(:) = 0
+    ldecomp%gbotrgt(:) = 0
 	
     if (masterproc) then
        	write(*,*)'FFelfelani: passing the lat/lon information among processors'
@@ -198,10 +198,10 @@ contains
           G_lon_long(gdc) = grc%londeg(gdc)
        end do
     end do	 	
-    call mpi_allreduce(G_lat_long, glat, ngrc, &
+    call mpi_allreduce(G_lat_long, ldecomp%glat, ngrc, &
                          MPI_REAL8, MPI_SUM, mpicom, ier) 
 
-    call mpi_allreduce(G_lon_long, glon, ngrc, &
+    call mpi_allreduce(G_lon_long, ldecomp%glon, ngrc, &
                          MPI_REAL8, MPI_SUM, mpicom, ier) 
 
     call mpi_barrier(mpicom,ier)
@@ -209,53 +209,53 @@ contains
     do  g_out = 1, ngrc
        do g_in = 1, ngrc
           ! identify neighbors with the ixy, jxy indices of grid cells
-          if (ixy(g_out) == ixy(g_in)          .and.  &
-              jxy(g_out) == jxy(g_in) - 1) then
+          if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in)          .and.  &
+              ldecomp%jxy(g_out) == ldecomp%jxy(g_in) - 1) then
 					
-              gneighbors(g_out) = gneighbors(g_out) + 1
-              gtop(g_out)      = g_in
+              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
+              ldecomp%gtop(g_out)      = g_in
 
-          else if (ixy(g_out) == ixy(g_in) + 1 .and.  &
-                   jxy(g_out) == jxy(g_in) - 1) then
+          else if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in) + 1 .and.  &
+                   ldecomp%jxy(g_out) == ldecomp%jxy(g_in) - 1) then
 					
-              gneighbors(g_out) = gneighbors(g_out) + 1
-              gtoplft(g_out)      = g_in
+              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
+              ldecomp%gtoplft(g_out)      = g_in
 
-          else if (ixy(g_out) == ixy(g_in) - 1 .and.  &
-                   jxy(g_out) == jxy(g_in) - 1) then
+          else if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in) - 1 .and.  &
+                   ldecomp%jxy(g_out) == ldecomp%jxy(g_in) - 1) then
 					
-              gneighbors(g_out) = gneighbors(g_out) + 1
-              gtoprgt(g_out)      = g_in
+              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
+              ldecomp%gtoprgt(g_out)      = g_in
 			  
-          else if (ixy(g_out) == ixy(g_in)     .and.  &
-                   jxy(g_out) == jxy(g_in) + 1) then
+          else if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in)     .and.  &
+                   ldecomp%jxy(g_out) == ldecomp%jxy(g_in) + 1) then
 					
-              gneighbors(g_out) = gneighbors(g_out) + 1
-              gbot(g_out)      = g_in
+              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
+              ldecomp%gbot(g_out)      = g_in
 
-          else if (ixy(g_out) == ixy(g_in) + 1 .and.  &
-                   jxy(g_out) == jxy(g_in) + 1) then
+          else if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in) + 1 .and.  &
+                   ldecomp%jxy(g_out) == ldecomp%jxy(g_in) + 1) then
 					
-              gneighbors(g_out) = gneighbors(g_out) + 1
-              gbotlft(g_out)      = g_in
+              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
+              ldecomp%gbotlft(g_out)      = g_in
 
-          else if (ixy(g_out) == ixy(g_in) - 1 .and.  &
-                   jxy(g_out) == jxy(g_in) + 1) then
+          else if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in) - 1 .and.  &
+                   ldecomp%jxy(g_out) == ldecomp%jxy(g_in) + 1) then
 					
-              gneighbors(g_out) = gneighbors(g_out) + 1
-              gbotrgt(g_out)      = g_in
+              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
+              ldecomp%gbotrgt(g_out)      = g_in
 			  
-          else if (ixy(g_out) == ixy(g_in) + 1 .and.  &
-                   jxy(g_out) == jxy(g_in)) then
+          else if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in) + 1 .and.  &
+                   ldecomp%jxy(g_out) == ldecomp%jxy(g_in)) then
 
-              gneighbors(g_out) = gneighbors(g_out) + 1
-              glft(g_out)      = g_in
+              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
+              ldecomp%glft(g_out)      = g_in
 
-          else if (ixy(g_out) == ixy(g_in) - 1 .and.  &
-                   jxy(g_out) == jxy(g_in)) then
+          else if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in) - 1 .and.  &
+                   ldecomp%jxy(g_out) == ldecomp%jxy(g_in)) then
 					
-              gneighbors(g_out) = gneighbors(g_out) + 1
-              grgt(g_out)      = g_in
+              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
+              ldecomp%grgt(g_out)      = g_in
 					
           end if  ! find surrounding neighbors
        end do  ! g_in loop

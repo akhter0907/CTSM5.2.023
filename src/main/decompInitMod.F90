@@ -12,7 +12,7 @@ module decompInitMod
   use spmdMod      , only : masterproc, iam, npes, mpicom
   use abortutils   , only : endrun
   use clm_varctl   , only : iulog
-  !
+  use decompMod  !Tanjila added for ldecomp for ixy, ....
   implicit none
   private
   !
@@ -72,21 +72,6 @@ contains
     integer :: begg, endg             ! beg and end gridcells
     integer, pointer  :: clumpcnt(:)  ! clump index counter
     integer, allocatable :: gdc2glo(:)! used to create gindex_global
-	!Tanjila
-    integer,pointer :: ixy(:)        ! FFelfelani Comment: i and j indices
-    integer,pointer :: jxy(:)        ! relative to the grid cell vector
-    integer,pointer :: gtop(:)       ! gridcell index of the top neighbor
-    integer,pointer :: gbot(:)       ! gridcell index of the bottom neighbor
-    integer,pointer :: glft(:)       ! gridcell index of the left neighbor
-    integer,pointer :: grgt(:)       ! gridcell index of the right neighbor
-    integer,pointer :: gtoplft(:)       ! gridcell index of the right neighbor
-    integer,pointer :: gtoprgt(:)       ! gridcell index of the right neighbor
-    integer,pointer :: gbotlft(:)       ! gridcell index of the right neighbor
-    integer,pointer :: gbotrgt(:)       ! gridcell index of the right neighbor
-    real(r8),pointer:: gneighbors(:) ! total number of neighbors
-    real(r8),pointer:: glat(:)       ! latitude of the the cell g --- global array
-    real(r8),pointer::	glon(:)       ! longitude of the the cell g --- global array 
-	!Tanjila
     type(bounds_type) :: bounds       ! contains subgrid bounds data
 
     !------------------------------------------------------------------------------
@@ -258,15 +243,15 @@ contains
     ! Set gindex_global
 
     allocate(gdc2glo(numg), stat=ier)
-	allocate(ixy(numg), stat=ier)   !Tanjila
-    allocate(jxy(numg), stat=ier)     !Tanjila
+	allocate(ldecomp%ixy(numg), stat=ier)   !Tanjila
+    allocate(ldecomp%jxy(numg), stat=ier)     !Tanjila
     if (ier /= 0) then
        write(iulog,*) 'decompInit_lnd(): allocation error1 for gdc2glo , etc'
        call endrun(msg=errMsg(sourcefile, __LINE__))
     end if
     gdc2glo(:) = 0
-	ixy(:) = 0   !Tanjila
-	jxy(:) = 0   !Tanjila
+	ldecomp%ixy(:) = 0   !Tanjila
+	ldecomp%jxy(:) = 0   !Tanjila
     allocate(clumpcnt(nclumps),stat=ier)
     if (ier /= 0) then
        write(iulog,*) 'decompInit_lnd(): allocation error1 for clumpcnt'
@@ -298,8 +283,8 @@ contains
        if (cid > 0) then
           ag = clumpcnt(cid)
           gdc2glo(ag) = an	
-		  ixy(ag) = ai  !Tanjila
-		  jxy(ag) = aj   !Tanjila
+		  ldecomp%ixy(ag) = ai  !Tanjila
+		  ldecomp%jxy(ag) = aj   !Tanjila
 		  clumpcnt(cid) = clumpcnt(cid) + 1
        end if
     end do
