@@ -12,7 +12,7 @@ module decompInitMod
   use spmdMod      , only : masterproc, iam, npes, mpicom
   use abortutils   , only : endrun
   use clm_varctl   , only : iulog
-  !
+  use decompMod  !Tanjila added for ldecomp for ixy, ....
   implicit none
   private
   !
@@ -246,6 +246,8 @@ contains
        call endrun(msg=errMsg(sourcefile, __LINE__))
     end if
     gdc2glo(:) = 0
+	ldecomp%ixy(:) = 0   !Tanjila
+	ldecomp%jxy(:) = 0   !Tanjila
     allocate(clumpcnt(nclumps),stat=ier)
     if (ier /= 0) then
        write(iulog,*) 'decompInit_lnd(): allocation error1 for clumpcnt'
@@ -281,7 +283,7 @@ contains
     end do
     end do
 
-    ! Initialize global gindex (non-compressed, includes ocean points)
+    ! Initialize global gindex (non-compressed, includes ocean points) !Tanjila check
     ! Note that gindex_global goes from (1:endg)
     nglob_x = lni !  decompMod module variables
     nglob_y = lnj !  decompMod module variables

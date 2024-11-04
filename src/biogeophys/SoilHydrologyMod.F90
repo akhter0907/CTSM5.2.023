@@ -33,7 +33,7 @@ module SoilHydrologyMod
   use LandunitType      , only : lun                
   use ColumnType        , only : column_type, col
   use PatchType         , only : patch
-  use IrrigationMod     , only : irrigation_type !Tanjila comment : From Felfelani
+!   use IrrigationMod     , only : irrigation_type !Tanjila comment : From Felfelani
 
   !
   ! !PUBLIC TYPES:
@@ -671,7 +671,9 @@ contains
 
    !-----------------------------------------------------------------------
    subroutine WaterTable(bounds, num_hydrologyc, filter_hydrologyc,num_urbanc, filter_urbanc, &
-        soilhydrology_inst, soilstate_inst, temperature_inst, waterstate_inst, waterflux_inst, irrigation_inst)
+        soilhydrology_inst, soilstate_inst, temperature_inst, waterstatebulk_inst, waterstate_inst, waterflux_inst, waterfluxbulk_inst) !Tanjila added waterstatebulk_inst as well as in default
+
+     ! Aman: Changed irrigation_inst to waterfluxbulk
      ! Tanjila comment: Added more variables from Felfelani
      ! !DESCRIPTION:
      ! Calculate watertable, considering aquifer recharge but no drainage.
@@ -688,20 +690,25 @@ contains
      use abortutils       , only : endrun
      use spmdMod          , only : masterproc
      !
-     type(groundwater_type)                   :: groundwater_inst
+     type(groundwater_type)                   :: groundwater_inst !Tanjila
 
 
      !
      ! !ARGUMENTS:
      type(bounds_type)        , intent(in)    :: bounds  
      integer                  , intent(in)    :: num_hydrologyc       ! number of column soil points in column filter
+	 integer                  , intent(in)    :: num_urbanc           ! Tanjila number of column urban points in column filter
+     integer                  , intent(in)    :: filter_urbanc(:)     ! Tanjila column filter for urban points
      integer                  , intent(in)    :: filter_hydrologyc(:) ! column filter for soil points
      type(soilhydrology_type) , intent(inout) :: soilhydrology_inst
      type(soilstate_type)     , intent(in)    :: soilstate_inst
      type(temperature_type)   , intent(in)    :: temperature_inst
      type(waterstatebulk_type)    , intent(inout) :: waterstatebulk_inst
      type(waterfluxbulk_type)     , intent(inout) :: waterfluxbulk_inst
-     type(irrigation_type)     , intent(in)   :: irrigation_inst !Tanjila comment: Added from Felfelani
+	 type(waterstate_type) , intent(inout) :: waterstate_inst !Tanjila added for error #6404: This name does not have a type, and must have an explicit type.
+	 type(waterflux_type) , intent(inout) :: waterflux_inst !Tanjila added for error error #6404: This name does not have a type, and must have an explicit type
+     ! Aman: replaced irrigation_inst by waterfluxbulk_inst
+    !  type(irrigation_type)     , intent(in)   :: irrigation_inst !Tanjila comment: Added from Felfelani 
      !
      ! !LOCAL VARIABLES:
      integer  :: c,j,fc,i                                ! indices
@@ -913,14 +920,16 @@ contains
             if (use_pumping == .true.) then
                 if (masterproc .and. secs == 0) write(iulog,*) 'This is gw_default with Pumping groundwater scheme'
                 call groundwater_inst%UpdateGWDefaultPump(bounds, num_hydrologyc, filter_hydrologyc,&
-                     soilhydrology_inst, soilstate_inst,waterstate_inst,irrigation_inst)
+                     soilhydrology_inst, soilstate_inst,waterstate_inst,waterfluxbulk_inst) 
+                     ! Aman: Changed irrigation_inst to waterfluxbulk
             end if
 
           ! Groundwater scheme: Pumping + Ying Fan lateral and Transmissivity 
           case(gw_FanLat_Pump)
             if (masterproc .and. secs == 0) write(iulog,*) 'This is gw_FanLat_Pump groundwater  scheme  '  
             call groundwater_inst%UpdateGWFanLatPump(bounds, num_hydrologyc, filter_hydrologyc,&
-                 soilhydrology_inst, soilstate_inst,waterstate_inst,irrigation_inst, waterflux_inst)
+                 soilhydrology_inst, soilstate_inst,waterstate_inst,waterfluxbulk_inst, waterflux_inst) 
+                 ! Aman: Changed irrigation_inst to waterfluxbulk
 
           case(gw_FanLat_TheimPump)
             if (masterproc .and. secs == 0) write(iulog,*) 'This is gw_FanLat_TheimPump groundwater  scheme  '  

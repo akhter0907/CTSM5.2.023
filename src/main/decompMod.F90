@@ -46,6 +46,7 @@ module decompMod
   public :: get_subgrid_level_from_name ! Given a name like nameg, return a subgrid level index like subgrid_level_gridcell
   public :: get_subgrid_level_gsize     ! get global size associated with subgrid_level
   public :: get_subgrid_level_gindex    ! get global index array associated with subgrid_level
+  
 
   ! !PRIVATE MEMBER FUNCTIONS:
   !
@@ -97,7 +98,8 @@ module decompMod
   end type clump_type
   public clump_type
   type(clump_type),public, allocatable :: clumps(:)
-!Tanjila  
+  
+  !---Tanjila added ldecomp back for neighbor grid finding
   type decomp_type
    !   integer,pointer :: gdc2glo(:)    ! 1d gdc to 1d glo ! Aman: Don't need this here
      integer,pointer :: ixy(:)        ! FFelfelani Comment: i and j indices
@@ -116,7 +118,6 @@ module decompMod
   end type decomp_type
   public decomp_type
   type(decomp_type),public,target :: ldecomp
-!Tanjila
 
   ! ---global sizes
   integer,public :: nclumps          ! total number of clumps across all processors

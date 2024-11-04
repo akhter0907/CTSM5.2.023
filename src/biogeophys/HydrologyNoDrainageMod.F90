@@ -32,7 +32,6 @@ Module HydrologyNoDrainageMod
   use LandunitType      , only : lun                
   use ColumnType        , only : col                
   use TopoMod, only : topo_type
-  use IrrigationMod     , only : irrigation_type !Tanjila
   use perf_mod          , only : t_startf, t_stopf
   !
   ! !PUBLIC TYPES:
@@ -142,7 +141,7 @@ contains
        atm2lnd_inst, soilstate_inst, energyflux_inst, temperature_inst, &
        water_inst, &
        soilhydrology_inst, saturated_excess_runoff_inst, infiltration_excess_runoff_inst, &
-       aerosol_inst, canopystate_inst, scf_method, soil_water_retention_curve, topo_inst, irrigation_inst)
+       aerosol_inst, canopystate_inst, scf_method, soil_water_retention_curve, topo_inst)
     !
     ! !DESCRIPTION:
     ! This is the main subroutine to execute the calculation of soil/snow
@@ -195,7 +194,6 @@ contains
     class(snow_cover_fraction_base_type), intent(in) :: scf_method
     class(soil_water_retention_curve_type), intent(in) :: soil_water_retention_curve
     class(topo_type)   , intent(in)    :: topo_inst
-	type(irrigation_type)    , intent(in)    :: irrigation_inst !Tanjila
     !
     ! !LOCAL VARIABLES:
     integer  :: g,l,c,j,fc                    ! indices
@@ -358,7 +356,7 @@ contains
       if (use_aquifer_layer()) then
          call WaterTable(bounds, num_hydrologyc, filter_hydrologyc, &
               soilhydrology_inst, soilstate_inst, temperature_inst, b_waterstate_inst, &
-              b_waterflux_inst, irrigation_inst) !Tanjila
+              b_waterflux_inst)
       else
 
          call PerchedWaterTable(bounds, num_hydrologyc, filter_hydrologyc, &

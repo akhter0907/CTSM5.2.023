@@ -37,6 +37,7 @@ module lnd2atmMod
   use LandunitType         , only : lun
   use GridcellType         , only : grc
   use landunit_varcon      , only : istice
+  use clm_time_manager     , only : get_curr_date, get_nstep !Tanjila
   !
   ! !PUBLIC TYPES:
   implicit none
@@ -160,6 +161,7 @@ contains
     ! !USES:
     use ch4varcon  , only : ch4offline
     use clm_varctl , only : use_hillslope_routing
+	use landunit_varcon  , only : istwet, istsoil, istice, istcrop !Tanjila
     !
     ! !ARGUMENTS:
     type(bounds_type)           , intent(in)    :: bounds
@@ -468,8 +470,8 @@ contains
         if ((lun%itype(l)==istsoil .or. lun%itype(l)==istcrop) .and. col%active(c)) then
              qflx_adjusted_irrig_col(c) = (1._r8 - GW_ratio(c)) * &
                water_inst%waterfluxbulk_inst%qflx_sfc_irrig_col(c)    ! AmanS: qflx_sfc_irrig belongs in waterfluxbulk_inst
-                !if (nstep == 300 .and. (irrigation_inst%qflx_sfc_irrig_col(c) .ne. 0._r8)) write(*,*) 'c1, g, lat, lon: ', c, g, grc%latdeg(g), grc%londeg(g)
-                !if (nstep == 300 .and. (irrigation_inst%qflx_sfc_irrig_col(c) .ne. 0._r8)) write(*,*) GW_ratio(c), irrigation_inst%qflx_sfc_irrig_col(c), qflx_adjusted_irrig_col(c)
+                !if (nstep == 300 .and. (water_inst%waterfluxbulk_inst%qflx_sfc_irrig_col(c) .ne. 0._r8)) write(*,*) 'c1, g, lat, lon: ', c, g, grc%latdeg(g), grc%londeg(g)
+                !if (nstep == 300 .and. (water_inst%waterfluxbulk_inst%qflx_sfc_irrig_col(c) .ne. 0._r8)) write(*,*) GW_ratio(c), water_inst%waterfluxbulk_inst%qflx_sfc_irrig_col(c), qflx_adjusted_irrig_col(c)
         end if
     end do
     ! AmanS: qflx_adjusted_irrig_col is a local variable

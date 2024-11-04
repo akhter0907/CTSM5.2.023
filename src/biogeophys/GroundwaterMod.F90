@@ -26,9 +26,11 @@ module GroundwaterMod
   !   I added residual lateral flow (when >0) to the sub-surface runoff
   !
   ! !USES:
+!   use IrrigationMod     , only : irrigation_type ! Aman: use waterfluxbulk
 #include "shr_assert.h"
   use shr_kind_mod      , only : r8 => shr_kind_r8
   use decompMod         , only : bounds_type, get_proc_global
+  use decompInitMod     , only : decompInit_lnd !Tanjila
   use shr_log_mod       , only : errMsg => shr_log_errMsg
   use abortutils        , only : endrun
   use clm_varctl        , only : iulog, use_pumping
@@ -44,7 +46,8 @@ module GroundwaterMod
   use SoilStateType     , only : soilstate_type
   use WaterfluxType     , only : waterflux_type
   use WaterstateType    , only : waterstate_type
-  use IrrigationMod     , only : irrigation_type
+  use WaterFluxBulkType , only : waterfluxbulk_type ! Aman: Use waterfluxbulk instead of irrigation
+!   use IrrigationMod     , only : irrigation_type
   use spmdMod           , only : iam, masterproc  ! FFelfelani: to get processor number
   use decompMod         , only : get_proc_global, get_proc_bounds, get_clump_bounds,get_proc_clumps  ! FFelfelani: to get number of gridcells
   use SoilWaterRetentionCurveMod, only : soil_water_retention_curve_type
@@ -76,7 +79,7 @@ contains
   
   !------------------------------------------------------------------------
   subroutine UpdateGWFanLatPump(this, bounds, num_hydrologyc, filter_hydrologyc, &
-        soilhydrology_inst, soilstate_inst,waterstate_inst, irrigation_inst, waterflux_inst)
+        soilhydrology_inst, soilstate_inst,waterstate_inst, waterfluxbulk_inst, waterflux_inst)
 
     ! !DESCRIPTION:
     !   In principle, Theim equation is applied between 
@@ -88,11 +91,11 @@ contains
 
     ! !USES:
     use spmdMod         , only : MPI_REAL8, MPI_SUM, mpicom, MPI_INTEGER
-    use decompMod       , only : ldecomp, get_proc_global
+    use decompMod       , only : ldecomp, get_proc_global !Tanjila added ldecomp back
     use shr_const_mod   , only : SHR_CONST_PI
     use GridcellType    , only : grc
     use clm_time_manager, only : get_step_size, get_curr_date, get_nstep
-    use landunit_varcon , only : istwet, istsoil, istice_mec, istcrop
+    use landunit_varcon , only : istwet, istsoil, istice, istcrop !Tanjila changed ISTICE_MEC to ISTICE
 
     ! !ARGUMENTS:
     class(groundwater_type)  , intent(inout) :: this
@@ -102,7 +105,8 @@ contains
     type(soilhydrology_type) , intent(inout) :: soilhydrology_inst
     type(soilstate_type)     , intent(in)    :: soilstate_inst
     type(waterstate_type)    , intent(inout) :: waterstate_inst
-    type(irrigation_type)    , intent(in)    :: irrigation_inst
+   !  type(irrigation_type)    , intent(in)    :: irrigation_inst ! Aman: Use waterfluxbulk
+    type(waterfluxbulk_type)     , intent(inout) :: waterfluxbulk_inst
     type(waterflux_type)     , intent(inout) :: waterflux_inst
 
     ! !LOCAL VARIABLES:	
@@ -160,8 +164,8 @@ contains
      associate(&                               
           zi                 =>    col%zi                                , & ! Input:  [real(r8) (:,:) ]  interface level below a "z" level (m)           
           GW_ratio           =>    col%GW_ratio                          , & ! Input:  [real(r8) (:)   ]  USGS GW ratio as irrigation source                                                
-                                              
-          qflx_irrig         =>    irrigation_inst%qflx_irrig_col        , & ! irrigation flux (mm H2O /s)
+          ! Aman: Replaced irrigation_inst by waterfluxbulk. qflx_irrig_col to qflx_sfc_irrig_col                                    
+          qflx_irrig         =>    waterfluxbulk_inst%qflx_sfc_irrig_col        , & ! irrigation flux (mm H2O /s) 
 
           bsw                =>    soilstate_inst%bsw_col                , & ! Input:  [real(r8) (:,:) ]  Clapp and Hornberger "b"                        
           hksat              =>    soilstate_inst%hksat_col              , & ! Input:  [real(r8) (:,:) ]  hydraulic conductivity at saturation (mm H2O /s)
@@ -598,7 +602,7 @@ contains
   end subroutine UpdateGWFanLatPump
   !-----------------------------------------------------------------------
   subroutine UpdateGWDefaultPump(this, bounds, num_hydrologyc, filter_hydrologyc, &
-        soilhydrology_inst, soilstate_inst,waterstate_inst, irrigation_inst)
+        soilhydrology_inst, soilstate_inst,waterstate_inst, waterfluxbulk_inst)
 
     ! !DESCRIPTION:
     !   In principle, Theim equation is applied between
@@ -610,11 +614,11 @@ contains
 
     ! !USES:
     use spmdMod         , only : MPI_REAL8, MPI_SUM, mpicom, MPI_INTEGER
-    use decompMod       , only : ldecomp, get_proc_global
+    use decompMod       , only : ldecomp, get_proc_global !Tanjila added ldecomp back
     use shr_const_mod   , only : SHR_CONST_PI
     use GridcellType    , only : grc
     use clm_time_manager, only : get_step_size, get_curr_date, get_nstep
-    use landunit_varcon , only : istwet, istsoil, istice_mec, istcrop
+    use landunit_varcon , only : istwet, istsoil, istice, istcrop !Tanjila changed ISTICE_MEC to ISTICE
 
     ! !ARGUMENTS:
     class(groundwater_type)  , intent(inout) :: this
@@ -624,7 +628,8 @@ contains
     type(soilhydrology_type) , intent(inout) :: soilhydrology_inst
     type(soilstate_type)     , intent(in)    :: soilstate_inst
     type(waterstate_type)    , intent(inout) :: waterstate_inst
-    type(irrigation_type)    , intent(in)    :: irrigation_inst
+   !  type(irrigation_type)    , intent(in)    :: irrigation_inst ! Aman: Use waterfluxbulk
+    type(waterfluxbulk_type)     , intent(inout) :: waterfluxbulk_inst
 
     ! !LOCAL VARIABLES:
  
@@ -664,8 +669,8 @@ contains
      associate(&                              
           zi                 =>    col%zi                                , & ! Input:  [real(r8) (:,:) ]  interface level below a "z" level (m)          
           GW_ratio           =>    col%GW_ratio                          , & ! Input:  [real(r8) (:)   ]  USGS GW ratio as irrigation source                                                
-                                             
-          qflx_irrig         =>    irrigation_inst%qflx_irrig_col        , & ! irrigation flux (mm H2O /s)
+          ! Aman: replaced irrigation_inst by waterfluxbulk. qflx_irrig_col to qflx_sfc_irrig_col                                   
+          qflx_irrig         =>    waterfluxbulk_inst%qflx_sfc_irrig_col        , & ! irrigation flux (mm H2O /s) 
 
           bsw                =>    soilstate_inst%bsw_col                , & ! Input:  [real(r8) (:,:) ]  Clapp and Hornberger "b"                        
           hksat              =>    soilstate_inst%hksat_col              , & ! Input:  [real(r8) (:,:) ]  hydraulic conductivity at saturation (mm H2O /s)
