@@ -52,7 +52,6 @@ contains
     use clm_varctl , only : nsegspc
     use decompMod  , only : gindex_global, nclumps, clumps
     use decompMod  , only : bounds_type, get_proc_bounds, procinfo
-
     !
     ! !ARGUMENTS:
     integer , intent(in) :: amask(:)
@@ -71,9 +70,8 @@ contains
     integer :: ier                    ! error code
     integer :: begg, endg             ! beg and end gridcells
     integer, pointer  :: clumpcnt(:)  ! clump index counter
-    integer, allocatable :: gdc2glo(:)! used to create gindex_global
+    integer, allocatable :: gdc2glo(:)! used to create gindex_global	
     type(bounds_type) :: bounds       ! contains subgrid bounds data
-
     !------------------------------------------------------------------------------
 
     lns = lni * lnj
@@ -243,8 +241,6 @@ contains
     ! Set gindex_global
 
     allocate(gdc2glo(numg), stat=ier)
-	allocate(ldecomp%ixy(numg), stat=ier)   !Tanjila
-    allocate(ldecomp%jxy(numg), stat=ier)     !Tanjila
     if (ier /= 0) then
        write(iulog,*) 'decompInit_lnd(): allocation error1 for gdc2glo , etc'
        call endrun(msg=errMsg(sourcefile, __LINE__))
@@ -259,7 +255,6 @@ contains
     end if
 
     ! clumpcnt is the start gdc index of each clump
-
 
     ag = 0
     clumpcnt = 0
@@ -282,10 +277,8 @@ contains
        cid = lcid(an)
        if (cid > 0) then
           ag = clumpcnt(cid)
-          gdc2glo(ag) = an	
-		  ldecomp%ixy(ag) = ai  !Tanjila
-		  ldecomp%jxy(ag) = aj   !Tanjila
-		  clumpcnt(cid) = clumpcnt(cid) + 1
+          gdc2glo(ag) = an		  
+          clumpcnt(cid) = clumpcnt(cid) + 1
        end if
     end do
     end do

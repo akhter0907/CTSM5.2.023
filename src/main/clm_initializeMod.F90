@@ -16,6 +16,7 @@ module clm_initializeMod
   use clm_varctl            , only : iulog
   use clm_varctl            , only : use_lch4, use_cn, use_cndv, use_c13, use_c14, nhillslope
   use clm_varctl            , only : use_soil_moisture_streams
+  use clm_varctl            , only : groundwater_scheme  ! AmanS: added to initialize neighboring gridcells only for Fan's scheme
   use clm_instur            , only : wt_lunit, urban_valid, wt_nat_patch, wt_cft, fert_cft
   use clm_instur            , only : irrig_method, wt_glc_mec, topo_glc_mec, pct_lake_max, pct_urban_max, ncolumns_hillslope
   use perf_mod              , only : t_startf, t_stopf
@@ -332,6 +333,7 @@ contains
     use FATESFireFactoryMod           , only : scalar_lightning
     use dynFATESLandUseChangeMod      , only : dynFatesLandUseInit
     use HillslopeHydrologyMod         , only : InitHillslope
+    use GroundwaterInitMod            , only : NeighborInit ! AmanS: initialize subroutine for groundwater neighbors
     !
     ! !ARGUMENTS
     integer, intent(in) :: ni, nj         ! global grid sizes
@@ -448,6 +450,12 @@ contains
        call initGridCells(bounds_clump, glc_behavior)
     end do
     !$OMP END PARALLEL DO
+
+    ! AmanS: Initialize neighbors for lateral groundwater flow
+    ! when groundwater_scheme is 1 (Fan)
+    if (groundwater_scheme==1) then
+       call NeighborInit()
+    end if
 
     ! Set global seg maps for gridcells, landlunits, columns and patches
     call decompInit_glcp(ni, nj, glc_behavior)
