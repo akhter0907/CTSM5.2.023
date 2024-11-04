@@ -16,6 +16,7 @@ module clm_initializeMod
   use clm_varctl            , only : iulog
   use clm_varctl            , only : use_lch4, use_cn, use_cndv, use_c13, use_c14, nhillslope
   use clm_varctl            , only : use_soil_moisture_streams
+  use clm_varctl            , only : groundwater_scheme  ! AmanS: added to initialize neighboring gridcells only for Fan's scheme
   use clm_instur            , only : wt_lunit, urban_valid, wt_nat_patch, wt_cft, fert_cft
   use clm_instur            , only : irrig_method, wt_glc_mec, topo_glc_mec, pct_lake_max, pct_urban_max, ncolumns_hillslope
   use perf_mod              , only : t_startf, t_stopf
@@ -195,6 +196,7 @@ contains
     use FATESFireFactoryMod           , only : scalar_lightning
     use dynFATESLandUseChangeMod      , only : dynFatesLandUseInit
     use HillslopeHydrologyMod         , only : InitHillslope
+    use GroundwaterInitMod            , only : NeighborInit ! AmanS: initialize subroutine for groundwater neighbors
     !
     ! !ARGUMENTS
     integer, intent(in) :: ni, nj         ! global grid sizes
@@ -311,143 +313,12 @@ contains
        call initGridCells(bounds_clump, glc_behavior)
     end do
     !$OMP END PARALLEL DO
-	!Tanjila
-    ! ------------------------------------------------------------------------
-    ! FFelfelani: defining/initializing the ldecomp%glat(:), ldecomp%glon(:)
-	!             ldecomp%gtop(:), ldecomp%gbot(:), ldecomp%glft(:),
-	!             ldecomp%rgt(:) and passing over among processors.
-    ! ------------------------------------------------------------------------
-    call get_proc_global(ng=ngrc, nl=nlan, nc=ncol, np=npat, nCohorts=nCohorts)
 
-    allocate(G_lat_long(ngrc))
-    allocate(G_lon_long(ngrc))
-    ! allocate(G_top_long(ngrc))
-    ! allocate(G_bot_long(ngrc))
-    ! allocate(G_lft_long(ngrc))
-    ! allocate(G_rgt_long(ngrc))
-
-    G_lat_long(:)  = 0._r8
-    G_lon_long(:)  = 0._r8	
-
-    ! G_top_long(:)  = 0	
-    ! G_bot_long(:)  = 0
-    ! G_lft_long(:)  = 0
-    ! G_rgt_long(:)  = 0
-	
-    ! Set ldecomp
-	allocate(ldecomp%glat(ngrc), stat=ier)
-    allocate(ldecomp%glon(ngrc), stat=ier)
-	
-    allocate(ldecomp%gtop(ngrc), stat=ier)
-    allocate(ldecomp%gbot(ngrc), stat=ier)
-    allocate(ldecomp%glft(ngrc), stat=ier)
-    allocate(ldecomp%grgt(ngrc), stat=ier)
-
-    allocate(ldecomp%gtoplft(ngrc), stat=ier)
-    allocate(ldecomp%gtoprgt(ngrc), stat=ier)
-    allocate(ldecomp%gbotlft(ngrc), stat=ier)
-    allocate(ldecomp%gbotrgt(ngrc), stat=ier)
-	
-    allocate(ldecomp%gneighbors(ngrc), stat=ier)
-	
-    ldecomp%glat(:) = 0._r8
-    ldecomp%glon(:) = 0._r8
-
-    ldecomp%gneighbors(:) = 0._r8
-	
-    ldecomp%gtop(:) = 0
-    ldecomp%gbot(:) = 0
-    ldecomp%glft(:) = 0
-    ldecomp%grgt(:) = 0
-
-    ldecomp%gtoplft(:) = 0
-    ldecomp%gtoprgt(:) = 0
-    ldecomp%gbotlft(:) = 0
-    ldecomp%gbotrgt(:) = 0
-	
-    if (masterproc) then
-       	write(*,*)'FFelfelani: passing the lat/lon information among processors'
+    ! AmanS: Initialize neighbors for lateral groundwater flow
+    ! when groundwater_scheme is 1 (Fan)
+    if (groundwater_scheme==1) then
+       call NeighborInit()
     end if
-	
-    do nc = 1, nclumps
-       call get_clump_bounds(nc, bounds_clump)
-
-       do gdc = bounds_clump%begg,bounds_clump%endg
-          G_lat_long(gdc) = grc%latdeg(gdc) 
-          G_lon_long(gdc) = grc%londeg(gdc)
-       end do
-    end do	 	
-    call mpi_allreduce(G_lat_long, ldecomp%glat, ngrc, &
-                         MPI_REAL8, MPI_SUM, mpicom, ier) 
-
-    call mpi_allreduce(G_lon_long, ldecomp%glon, ngrc, &
-                         MPI_REAL8, MPI_SUM, mpicom, ier) 
-
-    call mpi_barrier(mpicom,ier)
- 
-    do  g_out = 1, ngrc
-       do g_in = 1, ngrc
-          ! identify neighbors with the ixy, jxy indices of grid cells
-          if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in)          .and.  &
-              ldecomp%jxy(g_out) == ldecomp%jxy(g_in) - 1) then
-					
-              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
-              ldecomp%gtop(g_out)      = g_in
-
-          else if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in) + 1 .and.  &
-                   ldecomp%jxy(g_out) == ldecomp%jxy(g_in) - 1) then
-					
-              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
-              ldecomp%gtoplft(g_out)      = g_in
-
-          else if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in) - 1 .and.  &
-                   ldecomp%jxy(g_out) == ldecomp%jxy(g_in) - 1) then
-					
-              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
-              ldecomp%gtoprgt(g_out)      = g_in
-			  
-          else if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in)     .and.  &
-                   ldecomp%jxy(g_out) == ldecomp%jxy(g_in) + 1) then
-					
-              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
-              ldecomp%gbot(g_out)      = g_in
-
-          else if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in) + 1 .and.  &
-                   ldecomp%jxy(g_out) == ldecomp%jxy(g_in) + 1) then
-					
-              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
-              ldecomp%gbotlft(g_out)      = g_in
-
-          else if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in) - 1 .and.  &
-                   ldecomp%jxy(g_out) == ldecomp%jxy(g_in) + 1) then
-					
-              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
-              ldecomp%gbotrgt(g_out)      = g_in
-			  
-          else if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in) + 1 .and.  &
-                   ldecomp%jxy(g_out) == ldecomp%jxy(g_in)) then
-
-              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
-              ldecomp%glft(g_out)      = g_in
-
-          else if (ldecomp%ixy(g_out) == ldecomp%ixy(g_in) - 1 .and.  &
-                   ldecomp%jxy(g_out) == ldecomp%jxy(g_in)) then
-					
-              ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
-              ldecomp%grgt(g_out)      = g_in
-					
-          end if  ! find surrounding neighbors
-       end do  ! g_in loop
-    end do
- 
-    deallocate(G_lat_long)
-    deallocate(G_lon_long)
-	   
-    ! deallocate(G_top_long)
-    ! deallocate(G_bot_long)
-    ! deallocate(G_lft_long)
-    ! deallocate(G_rgt_long)
-!Tanjila ends
 
     ! Set global seg maps for gridcells, landlunits, columns and patches
     call decompInit_glcp(ni, nj, glc_behavior)
