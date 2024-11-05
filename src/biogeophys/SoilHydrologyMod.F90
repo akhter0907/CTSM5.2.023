@@ -670,11 +670,15 @@ contains
    end subroutine UpdateUrbanPonding
 
    !-----------------------------------------------------------------------
-   subroutine WaterTable(bounds, num_hydrologyc, filter_hydrologyc,num_urbanc, filter_urbanc, &
-        soilhydrology_inst, soilstate_inst, temperature_inst, waterstatebulk_inst, waterstate_inst, waterflux_inst, waterfluxbulk_inst) !Tanjila added waterstatebulk_inst as well as in default
+   subroutine WaterTable(bounds, num_hydrologyc, filter_hydrologyc, &
+        soilhydrology_inst, soilstate_inst, temperature_inst, waterstatebulk_inst, waterfluxbulk_inst) 
+        ! Tanjila added waterstatebulk_inst as well as in default
 
      ! Aman: Changed irrigation_inst to waterfluxbulk
      ! Tanjila comment: Added more variables from Felfelani
+     ! AmanS: removed num_urbanc and filter_urbanc added by Tanjila, because they are not needed.
+     ! Also changed waterstate_inst and waterflux_inst to waterstatebulk_inst and waterfluxbulk_inst.
+
      ! !DESCRIPTION:
      ! Calculate watertable, considering aquifer recharge but no drainage.
      !
@@ -697,18 +701,14 @@ contains
      ! !ARGUMENTS:
      type(bounds_type)        , intent(in)    :: bounds  
      integer                  , intent(in)    :: num_hydrologyc       ! number of column soil points in column filter
-	 integer                  , intent(in)    :: num_urbanc           ! Tanjila number of column urban points in column filter
-     integer                  , intent(in)    :: filter_urbanc(:)     ! Tanjila column filter for urban points
      integer                  , intent(in)    :: filter_hydrologyc(:) ! column filter for soil points
      type(soilhydrology_type) , intent(inout) :: soilhydrology_inst
      type(soilstate_type)     , intent(in)    :: soilstate_inst
      type(temperature_type)   , intent(in)    :: temperature_inst
      type(waterstatebulk_type)    , intent(inout) :: waterstatebulk_inst
      type(waterfluxbulk_type)     , intent(inout) :: waterfluxbulk_inst
-	 type(waterstate_type) , intent(inout) :: waterstate_inst !Tanjila added for error #6404: This name does not have a type, and must have an explicit type.
-	 type(waterflux_type) , intent(inout) :: waterflux_inst !Tanjila added for error error #6404: This name does not have a type, and must have an explicit type
      ! Aman: replaced irrigation_inst by waterfluxbulk_inst
-    !  type(irrigation_type)     , intent(in)   :: irrigation_inst !Tanjila comment: Added from Felfelani 
+     !  type(irrigation_type)     , intent(in)   :: irrigation_inst !Tanjila comment: Added from Felfelani 
      !
      ! !LOCAL VARIABLES:
      integer  :: c,j,fc,i                                ! indices
@@ -910,7 +910,7 @@ contains
           endif
        enddo
 
-       !======= Tanila comment: From FFelfelani: update zwt based on different GW schemes ===================     
+       !======= Tanjila comment: From FFelfelani: update zwt based on different GW schemes ===================     
        ! compute drainage from the bottom of the soil column
        select case(groundwater_scheme)
 
@@ -920,15 +920,16 @@ contains
             if (use_pumping == .true.) then
                 if (masterproc .and. secs == 0) write(iulog,*) 'This is gw_default with Pumping groundwater scheme'
                 call groundwater_inst%UpdateGWDefaultPump(bounds, num_hydrologyc, filter_hydrologyc,&
-                     soilhydrology_inst, soilstate_inst,waterstate_inst,waterfluxbulk_inst) 
+                     soilhydrology_inst, soilstate_inst,waterstatebulk_inst, waterfluxbulk_inst) 
                      ! Aman: Changed irrigation_inst to waterfluxbulk
+                     ! Changed waterstate_inst to waterstatebulk_inst
             end if
 
           ! Groundwater scheme: Pumping + Ying Fan lateral and Transmissivity 
           case(gw_FanLat_Pump)
             if (masterproc .and. secs == 0) write(iulog,*) 'This is gw_FanLat_Pump groundwater  scheme  '  
             call groundwater_inst%UpdateGWFanLatPump(bounds, num_hydrologyc, filter_hydrologyc,&
-                 soilhydrology_inst, soilstate_inst,waterstate_inst,waterfluxbulk_inst, waterflux_inst) 
+                 soilhydrology_inst, soilstate_inst, waterstatebulk_inst, waterfluxbulk_inst) 
                  ! Aman: Changed irrigation_inst to waterfluxbulk
 
           case(gw_FanLat_TheimPump)

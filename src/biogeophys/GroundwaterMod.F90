@@ -44,8 +44,9 @@ module GroundwaterMod
   use filterColMod      , only : filter_col_type, col_filter_from_logical_array
   use SoilHydrologyType , only : soilhydrology_type  
   use SoilStateType     , only : soilstate_type
-  use WaterfluxType     , only : waterflux_type
-  use WaterstateType    , only : waterstate_type
+!   use WaterFluxType     , only : waterflux_type
+!   use WaterStateType    , only : waterstate_type
+  use WaterStateBulkType, only : waterstatebulk_type ! Aman: Replacing by bulk counterparts
   use WaterFluxBulkType , only : waterfluxbulk_type ! Aman: Use waterfluxbulk instead of irrigation
 !   use IrrigationMod     , only : irrigation_type
   use spmdMod           , only : iam, masterproc  ! FFelfelani: to get processor number
@@ -79,7 +80,8 @@ contains
   
   !------------------------------------------------------------------------
   subroutine UpdateGWFanLatPump(this, bounds, num_hydrologyc, filter_hydrologyc, &
-        soilhydrology_inst, soilstate_inst,waterstate_inst, waterfluxbulk_inst, waterflux_inst)
+        soilhydrology_inst, soilstate_inst, waterstatebulk_inst, waterfluxbulk_inst)
+        ! AmanS: Replaced by bulk water instances. One less argument.
 
     ! !DESCRIPTION:
     !   In principle, Theim equation is applied between 
@@ -104,10 +106,10 @@ contains
     integer                  , intent(in)    :: filter_hydrologyc(:) ! column filter for soil points
     type(soilhydrology_type) , intent(inout) :: soilhydrology_inst
     type(soilstate_type)     , intent(in)    :: soilstate_inst
-    type(waterstate_type)    , intent(inout) :: waterstate_inst
+    type(waterstatebulk_type), intent(inout) :: waterstatebulk_inst
    !  type(irrigation_type)    , intent(in)    :: irrigation_inst ! Aman: Use waterfluxbulk
-    type(waterfluxbulk_type)     , intent(inout) :: waterfluxbulk_inst
-    type(waterflux_type)     , intent(inout) :: waterflux_inst
+    type(waterfluxbulk_type) , intent(inout) :: waterfluxbulk_inst
+   !  type(waterflux_type)     , intent(inout) :: waterflux_inst
 
     ! !LOCAL VARIABLES:	
  
@@ -179,9 +181,9 @@ contains
           AqTransmiss        =>    soilhydrology_inst%AqTransmiss_col    , & ! Output: [real(r8) (:)   ]  Aquifer Transmissivity(mm2/s)
           Pump_wa            =>    soilhydrology_inst%Pump_wa_col        , & ! Output: [real(r8) (:)   ]  Pumped Water from the aquifer(mm)
 
-          qflx_drain         =>    waterflux_inst%qflx_drain_col         , & ! Input and Output: [real(r8) (:)   ] sub-surface runoff (mm H2O /s)                    
+          qflx_drain         =>    waterfluxbulk_inst%qflx_drain_col     , & ! Input and Output: [real(r8) (:)   ] sub-surface runoff (mm H2O /s)                    
 
-          h2osoi_liq         =>    waterstate_inst%h2osoi_liq_col        & ! Output: [real(r8) (:,:) ] liquid water (kg/m2)
+          h2osoi_liq         =>    waterstatebulk_inst%h2osoi_liq_col      & ! Output: [real(r8) (:,:) ] liquid water (kg/m2)
           )
        !-----------------------------------------------
        dtime = get_step_size()
@@ -602,7 +604,7 @@ contains
   end subroutine UpdateGWFanLatPump
   !-----------------------------------------------------------------------
   subroutine UpdateGWDefaultPump(this, bounds, num_hydrologyc, filter_hydrologyc, &
-        soilhydrology_inst, soilstate_inst,waterstate_inst, waterfluxbulk_inst)
+        soilhydrology_inst, soilstate_inst, waterstatebulk_inst, waterfluxbulk_inst)
 
     ! !DESCRIPTION:
     !   In principle, Theim equation is applied between
@@ -627,7 +629,7 @@ contains
     integer                  , intent(in)    :: filter_hydrologyc(:) ! column filter for soil points
     type(soilhydrology_type) , intent(inout) :: soilhydrology_inst
     type(soilstate_type)     , intent(in)    :: soilstate_inst
-    type(waterstate_type)    , intent(inout) :: waterstate_inst
+    type(waterstatebulk_type)    , intent(inout) :: waterstatebulk_inst
    !  type(irrigation_type)    , intent(in)    :: irrigation_inst ! Aman: Use waterfluxbulk
     type(waterfluxbulk_type)     , intent(inout) :: waterfluxbulk_inst
 
@@ -686,7 +688,7 @@ contains
           QlatField_north    =>    soilhydrology_inst%QlatField_northing_grc , & !  Output: [real(r8) (:)   ] Northward lateral GW flow
           QlatField_east     =>    soilhydrology_inst%QlatField_easting_grc  , & !  Output: [real(r8) (:)   ] Eastward lateral GW flow
 
-          h2osoi_liq         =>    waterstate_inst%h2osoi_liq_col              & ! Output: [real(r8) (:,:) ] liquid water (kg/m2)
+          h2osoi_liq         =>    waterstatebulk_inst%h2osoi_liq_col          & ! Output: [real(r8) (:,:) ] liquid water (kg/m2)
           )
        !-----------------------------------------------
        dtime = get_step_size()

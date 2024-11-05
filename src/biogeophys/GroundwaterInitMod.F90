@@ -95,7 +95,7 @@ contains
       integer :: numg               ! number of land gridcells
       integer :: ier, mpierr        ! error status
 
-      integer,  allocatable :: ncells_array(:), begg_array(:) ! number of cells and starting global grid cell index per process 
+      integer, allocatable :: ncells_array(:), begg_array(:) ! number of cells and starting global grid cell index per process 
       
       associate(&
          gclat             =>    ldecomp%glat         , & ! Output: [real(r8) (:) ] gridcell latitude global
@@ -331,6 +331,8 @@ contains
 
 
       call t_stopf('gw-neighbor-decomp')
+
+      end associate
 
    end subroutine DetermineNeighbors_GW
 

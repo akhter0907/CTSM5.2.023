@@ -89,7 +89,7 @@ contains
     associate(                                                            & ! Input: layer thickness depth (m)  
          dz                 => col%dz                                    , & ! Input: column type
          ctype              => col%itype                                 , & ! Input: gridcell flux of flood water from RTM  
-         GW_ratio           => col%GW_ratio                          , & !Tanjila comment: Input:  [real(r8) (:)   ]  USGS GW ratio as irrigation source          
+         GW_ratio           => col%GW_ratio                              , & !Tanjila comment: Input:  [real(r8) (:)   ]  USGS GW ratio as irrigation source          
          qflx_floodg        => wateratm2lndbulk_inst%forc_flood_grc      , & ! Input: rain rate [mm/s]   
          forc_rain          => wateratm2lndbulk_inst%forc_rain_downscaled_col , & ! Input: snow rate [mm/s]
          forc_snow          => wateratm2lndbulk_inst%forc_snow_downscaled_col , & ! Input: water mass begining of the time step     
@@ -230,7 +230,8 @@ contains
 
          qflx_runoff(c) = qflx_drain(c) + qflx_surf(c) + qflx_qrgwl(c) + qflx_drain_perched(c)
 		 
-         ! if ((lun%itype(l)==istsoil .or. lun%itype(l)==istcrop) .and. col%active(c)) then !Tanjila: the default CTSM does not adjust for irrigation flux here, need to find that and adjust there
+         ! if ((lun%itype(l)==istsoil .or. lun%itype(l)==istcrop) .and. col%active(c)) then 
+         ! Tanjila: the default CTSM does not adjust for irrigation flux here, need to find that and adjust there
             ! if (use_pumping == .true.) then !Tanjila
                ! qflx_runoff(c) = qflx_runoff(c) - (1._r8 - GW_ratio(c)) * qflx_irrig(c)
             ! else
