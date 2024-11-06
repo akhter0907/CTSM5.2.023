@@ -1,6 +1,7 @@
 module GroundwaterInitMod
    !-----------------------------------------------------------------------
    ! Module to find neighbors for GroundwaterMod
+   ! Contains code to read input data required for GroundwaterMod
    ! Author: Aman Shrestha
    ! Created on: 2024/11/04
    !-----------------------------------------------------------------------
@@ -29,9 +30,64 @@ module GroundwaterInitMod
 !-----------------------------------------------------------------------
 contains
 !-----------------------------------------------------------------------
+   subroutine read_GWinput(bounds)
+    
+      use shr_log_mod           , only : errMsg => shr_log_errMsg
+      use shr_sys_mod           , only : shr_sys_abort
+      use ncdio_pio             , only : file_desc_t
+      use decompMod             , only : bounds_type
+      use clm_varcon            , only : grlnd 
+      use GridcellType          , only : grc                
+      use ColumnType            , only : col                 
+   
+      ! !ARGUMENTS:
+      type(bounds_type)   , intent(in)    :: bounds
+
+      ! LOCAL VARAIBLES:
+      integer               :: c,g               ! indices
+      type(file_desc_t)     :: ncid              ! netcdf id
+      logical               :: readvar 
+      real(r8) ,pointer     :: GWratio (:)       ! FFelfelani Comment: read in - USGS GW ratio !Tanjila
+      character(len=*), parameter :: subname = 'read_GWinput'
+
+      character(len=*), parameter, private :: sourcefile = &
+            __FILE__
+      !------------------------------------------------------------------------
+
+      begc = bounds%begc; endc= bounds%endc
+
+      !-----------------------------------------------
+      ! AmanS: FFelfelani Comment: Read in USGS GW ratio
+      !-----------------------------------------------
+
+      allocate(GWratio(bounds%begg:bounds%endg))
+      call ncd_io(ncid=ncid, varname='USGS_mean', flag='read', data=GWratio, dim1name=grlnd, readvar=readvar)
+      if (.not. readvar) then
+         call shr_sys_abort(' ERROR: USGS GW ratio NOT on surfdata file'//&
+              errMsg(sourcefile, __LINE__)) 
+      end if
+     
+      !  Determine gridcell USGS GW Ratio
+      do g = bounds%begg,bounds%endg
+         grc%GW_ratio(g) = max(GWratio(g), 0.0_r8)
+      end do
+  
+      ! Set Column USGS GW ratio	
+      do c = begc,endc
+         g = col%gridcell(c)
+         ! check for near zero slopes, set minimum value
+         col%GW_ratio(c) = max(GWratio(g), 0.0_r8)
+      end do
+
+      deallocate(GWratio)
+  
+
+   end subroutine read_GWinput
+
    subroutine NeighborInit()
       !-----------------------------------------------------------------------
       ! Initialize neighbor grids
+      ! Called in clm_intialize2
       !-----------------------------------------------------------------------
       ! Local variables:
       integer :: ier          ! error status
@@ -79,7 +135,7 @@ contains
 
    subroutine DetermineNeighbors_GW()
       !-----------------------------------------------------------------------
-      ! Determines neighbors for groundwater
+      ! Determines neighbors for groundwater. Called from NeighborInit.
       ! Most of the codes have been shamelessly copied from Fates module.
       ! Fates tag sci.1.77.2_api.36.0.0
       !

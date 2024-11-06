@@ -20,6 +20,7 @@ module initVerticalMod
   use clm_varctl        , only : use_bedrock, rundef
   use clm_varctl        , only : soil_layerstruct_predefined, soil_layerstruct_userdefined
   use clm_varctl        , only : use_fates
+  use clm_varctl        , only : groundwater_scheme, use_pumping  ! AmanS
   use clm_varcon        , only : zlak, dzlak, zsoi, dzsoi, zisoi, dzsoi_decomp, spval, ispval, grlnd 
   use column_varcon     , only : icol_roof, icol_sunwall, icol_shadewall, is_hydrologically_active
   use landunit_varcon   , only : istdlak, istice
@@ -149,7 +150,7 @@ contains
   !------------------------------------------------------------------------
   subroutine initVertical(bounds, glc_behavior, thick_wall, thick_roof)
     use clm_varcon           , only : zmin_bedrock
-
+    use GroundwaterInitMod   , only : read_GWinput ! AmanS
     !
     ! !ARGUMENTS:
     type(bounds_type)   , intent(in)    :: bounds
@@ -165,7 +166,7 @@ contains
     character(len=256)    :: locfn             ! local filename
     real(r8) ,pointer     :: std (:)           ! read in - topo_std 
     real(r8) ,pointer     :: tslope (:)        ! read in - topo_slope 
-	real(r8) ,pointer     :: GWratio (:)       ! FFelfelani Comment: read in - USGS GW ratio !Tanjila
+    real(r8) ,pointer     :: GWratio (:)       ! FFelfelani Comment: read in - USGS GW ratio !Tanjila
     real(r8)              :: slope0            ! temporary
     integer               :: ier               ! error status
     real(r8)              :: scalez = 0.025_r8 ! Soil layer thickness discretization (m)
@@ -442,7 +443,7 @@ contains
     !-----------------------------------------------
 
     allocate(zbedrock_in(bounds%begg:bounds%endg))
-!Tanjila
+    !Tanjila
     allocate(bedrock_depth_dummy(bounds%begg:bounds%endg))
 
     !  FFElfelani Comment: Determine gridcell bedrock
@@ -452,7 +453,7 @@ contains
           call endrun( 'ERROR:: zbedrock not found on surface data set, and use_bedrock is true.'//errmsg(sourcefile, __LINE__) )
        end if
     end if
-!Tanjila
+    !Tanjila
 
     if (use_bedrock) then
        call ncd_io(ncid=ncid, varname='zbedrock', flag='read', data=zbedrock_in, dim1name=grlnd, readvar=readvar)
@@ -488,7 +489,7 @@ contains
        end do
     end do
 
-!Tanjila
+    ! Tanjila
     !  FFElfelani Comment: Determine gridcell bedrock
     do g = bounds%begg,bounds%endg
          grc%bedrock_depth(g) = bedrock_depth_dummy(g)
@@ -659,56 +660,14 @@ contains
        col%topo_std(c) = std(g)
     end do
     deallocate(std)
-	
-!Tanjila
-    !-----------------------------------------------
-    ! FFelfelani Comment: Read in USGS GW ratio
-    !-----------------------------------------------
-
-    allocate(GWratio(bounds%begg:bounds%endg))
-    call ncd_io(ncid=ncid, varname='USGS_mean', flag='read', data=GWratio, dim1name=grlnd, readvar=readvar)
-    if (.not. readvar) then
-       call shr_sys_abort(' ERROR: USGS GW ratio NOT on surfdata file'//&
-            errMsg(sourcefile, __LINE__)) 
-    end if
-	
-    !  Determine gridcell USGS GW Ratio
-    do g = bounds%begg,bounds%endg
-       grc%GW_ratio(g) = max(GWratio(g), 0.0_r8)
-    end do
-
-    ! Set Column USGS GW ratio	
-    do c = begc,endc
-       g = col%gridcell(c)
-       ! check for near zero slopes, set minimum value
-       col%GW_ratio(c) = max(GWratio(g), 0.0_r8)
-    end do
-    deallocate(GWratio)
-!Tanjila
 
     !-----------------------------------------------
     ! AmanS: FFelfelani Comment: Read in USGS GW ratio
+    ! Read GW_ratio only when pumping is on.
     !-----------------------------------------------
-
-    allocate(GWratio(bounds%begg:bounds%endg))
-    call ncd_io(ncid=ncid, varname='USGS_mean', flag='read', data=GWratio, dim1name=grlnd, readvar=readvar)
-    if (.not. readvar) then
-       call shr_sys_abort(' ERROR: USGS GW ratio NOT on surfdata file'//&
-            errMsg(sourcefile, __LINE__)) 
+    if(use_pumping) then
+       call read_GWinput(bounds)
     end if
-	
-    !  Determine gridcell USGS GW Ratio
-    do g = bounds%begg,bounds%endg
-       grc%GW_ratio(g) = max(GWratio(g), 0.0_r8)
-    end do
-
-    ! Set Column USGS GW ratio	
-    do c = begc,endc
-       g = col%gridcell(c)
-       ! check for near zero slopes, set minimum value
-       col%GW_ratio(c) = max(GWratio(g), 0.0_r8)
-    end do
-    deallocate(GWratio)
 
     !-----------------------------------------------
     ! SCA shape function defined
