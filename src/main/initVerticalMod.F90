@@ -151,6 +151,7 @@ contains
   subroutine initVertical(bounds, glc_behavior, thick_wall, thick_roof)
     use clm_varcon           , only : zmin_bedrock
     use GroundwaterInitMod   , only : read_GWinput ! AmanS
+
     !
     ! !ARGUMENTS:
     type(bounds_type)   , intent(in)    :: bounds
@@ -166,14 +167,14 @@ contains
     character(len=256)    :: locfn             ! local filename
     real(r8) ,pointer     :: std (:)           ! read in - topo_std 
     real(r8) ,pointer     :: tslope (:)        ! read in - topo_slope 
-    real(r8) ,pointer     :: GWratio (:)       ! FFelfelani Comment: read in - USGS GW ratio !Tanjila
+   !  real(r8) ,pointer     :: GWratio (:)       ! FFelfelani Comment: read in - USGS GW ratio !Tanjila
     real(r8)              :: slope0            ! temporary
     integer               :: ier               ! error status
     real(r8)              :: scalez = 0.025_r8 ! Soil layer thickness discretization (m)
     real(r8)              :: thick_equal = 0.2
     character(len=20)     :: calc_method       ! soil layer calculation method
     real(r8) ,pointer     :: zbedrock_in(:)   ! read in - z_bedrock
-	real(r8) ,pointer     :: bedrock_depth_dummy(:) ! read in - z_bedrock !Tanjila
+    real(r8) ,pointer     :: bedrock_depth_dummy(:) ! read in - z_bedrock !Tanjila
     real(r8) ,pointer     :: lakedepth_in(:)   ! read in - lakedepth 
     real(r8), allocatable :: zurb_wall(:,:)    ! wall (layer node depth)
     real(r8), allocatable :: zurb_roof(:,:)    ! roof (layer node depth)
@@ -502,7 +503,7 @@ contains
     end do
 
     deallocate(zbedrock_in)
-	deallocate(bedrock_depth_dummy)
+    deallocate(bedrock_depth_dummy)
     !-----------------------------------------------
     ! Set lake levels and layers (no interfaces)
     !-----------------------------------------------

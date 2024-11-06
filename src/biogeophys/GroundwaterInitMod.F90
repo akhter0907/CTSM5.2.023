@@ -12,6 +12,14 @@ module GroundwaterInitMod
    use domainMod             , only : ldomain
    use spmdMod               , only : MPI_REAL8, MPI_INTEGER, mpicom, npes, masterproc, iam
    use perf_mod              , only : t_startf, t_stopf
+   ! read_GWinput modules
+   use shr_log_mod           , only : errMsg => shr_log_errMsg
+   use shr_sys_mod           , only : shr_sys_abort
+   use decompMod             , only : bounds_type
+   use clm_varcon            , only : grlnd 
+   use GridcellType          , only : grc                
+   use ColumnType            , only : col   
+   use ncdio_pio
 
    ! CIME Globals
    use shr_infnan_mod            , only : nan => shr_infnan_nan, assignment(=)
@@ -27,18 +35,13 @@ module GroundwaterInitMod
 
    logical :: debug = .false.  ! for debugging this module
 
+   character(len=*), parameter, private :: sourcefile = &
+         __FILE__
+
 !-----------------------------------------------------------------------
 contains
 !-----------------------------------------------------------------------
-   subroutine read_GWinput(bounds)
-    
-      use shr_log_mod           , only : errMsg => shr_log_errMsg
-      use shr_sys_mod           , only : shr_sys_abort
-      use ncdio_pio             , only : file_desc_t
-      use decompMod             , only : bounds_type
-      use clm_varcon            , only : grlnd 
-      use GridcellType          , only : grc                
-      use ColumnType            , only : col                 
+   subroutine read_GWinput(bounds)              
    
       ! !ARGUMENTS:
       type(bounds_type)   , intent(in)    :: bounds
@@ -47,11 +50,10 @@ contains
       integer               :: c,g               ! indices
       type(file_desc_t)     :: ncid              ! netcdf id
       logical               :: readvar 
+      integer               :: begc, endc
       real(r8) ,pointer     :: GWratio (:)       ! FFelfelani Comment: read in - USGS GW ratio !Tanjila
       character(len=*), parameter :: subname = 'read_GWinput'
 
-      character(len=*), parameter, private :: sourcefile = &
-            __FILE__
       !------------------------------------------------------------------------
 
       begc = bounds%begc; endc= bounds%endc
