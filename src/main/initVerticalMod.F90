@@ -150,7 +150,7 @@ contains
   !------------------------------------------------------------------------
   subroutine initVertical(bounds, glc_behavior, thick_wall, thick_roof)
     use clm_varcon           , only : zmin_bedrock
-    use GroundwaterInitMod   , only : read_GWinput ! AmanS
+    !use GroundwaterInitMod   , only : read_GWinput ! AmanS
 
     !
     ! !ARGUMENTS:
@@ -167,7 +167,7 @@ contains
     character(len=256)    :: locfn             ! local filename
     real(r8) ,pointer     :: std (:)           ! read in - topo_std 
     real(r8) ,pointer     :: tslope (:)        ! read in - topo_slope 
-   !  real(r8) ,pointer     :: GWratio (:)       ! FFelfelani Comment: read in - USGS GW ratio !Tanjila
+    real(r8) ,pointer     :: GWratio (:)       ! FFelfelani Comment: read in - USGS GW ratio !Tanjila
     real(r8)              :: slope0            ! temporary
     integer               :: ier               ! error status
     real(r8)              :: scalez = 0.025_r8 ! Soil layer thickness discretization (m)
@@ -662,14 +662,38 @@ contains
     end do
     deallocate(std)
 
+    ! !-----------------------------------------------
+    ! ! Tanjila broght back to initvertical to solve segmentation fault wth ncd pio
+	!  AmanS: FFelfelani Comment: Read in USGS GW ratio
+    ! ! Read GW_ratio only when pumping is on.
+    ! !-----------------------------------------------
+    ! if(use_pumping) then
+       ! call read_GWinput(bounds)
+    ! end if
     !-----------------------------------------------
-    ! AmanS: FFelfelani Comment: Read in USGS GW ratio
-    ! Read GW_ratio only when pumping is on.
+    ! FFelfelani Comment: Read in USGS GW ratio
     !-----------------------------------------------
-    if(use_pumping) then
-       call read_GWinput(bounds)
-    end if
 
+    allocate(GWratio(bounds%begg:bounds%endg))
+    call ncd_io(ncid=ncid, varname='USGS_mean', flag='read', data=GWratio, dim1name=grlnd, readvar=readvar)
+    if (.not. readvar) then
+       call shr_sys_abort(' ERROR: USGS GW ratio NOT on surfdata file'//&
+            errMsg(sourcefile, __LINE__)) 
+    end if
+	
+    !  Determine gridcell USGS GW Ratio
+    do g = bounds%begg,bounds%endg
+       grc%GW_ratio(g) = max(GWratio(g), 0.0_r8)
+    end do
+
+    ! Set Column USGS GW ratio	
+    do c = begc,endc
+       g = col%gridcell(c)
+       ! check for near zero slopes, set minimum value
+       col%GW_ratio(c) = max(GWratio(g), 0.0_r8)
+    end do
+    deallocate(GWratio)
+	
     !-----------------------------------------------
     ! SCA shape function defined
     !-----------------------------------------------

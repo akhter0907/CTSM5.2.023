@@ -41,50 +41,50 @@ module GroundwaterInitMod
 !-----------------------------------------------------------------------
 contains
 !-----------------------------------------------------------------------
-   subroutine read_GWinput(bounds)              
+   ! subroutine read_GWinput(bounds)              
    
-      ! !ARGUMENTS:
-      type(bounds_type)   , intent(in)    :: bounds
+      ! ! !ARGUMENTS:
+      ! type(bounds_type)   , intent(in)    :: bounds
 
-      ! LOCAL VARAIBLES:
-      integer               :: c,g               ! indices
-      type(file_desc_t)     :: ncid              ! netcdf id
-      logical               :: readvar 
-      integer               :: begc, endc
-      real(r8) ,pointer     :: GWratio (:)       ! FFelfelani Comment: read in - USGS GW ratio !Tanjila
-      character(len=*), parameter :: subname = 'read_GWinput'
+      ! ! LOCAL VARAIBLES:
+      ! integer               :: c,g               ! indices
+      ! type(file_desc_t)     :: ncid              ! netcdf id
+      ! logical               :: readvar 
+      ! integer               :: begc, endc
+      ! real(r8) ,pointer     :: GWratio (:)       ! FFelfelani Comment: read in - USGS GW ratio !Tanjila
+      ! character(len=*), parameter :: subname = 'read_GWinput'
 
-      !------------------------------------------------------------------------
+      ! !------------------------------------------------------------------------
 
-      begc = bounds%begc; endc= bounds%endc
+      ! begc = bounds%begc; endc= bounds%endc
 
-      !-----------------------------------------------
-      ! AmanS: FFelfelani Comment: Read in USGS GW ratio
-      !-----------------------------------------------
+      ! !-----------------------------------------------
+      ! ! AmanS: FFelfelani Comment: Read in USGS GW ratio
+      ! !-----------------------------------------------
 
-      allocate(GWratio(bounds%begg:bounds%endg))
-      call ncd_io(ncid=ncid, varname='USGS_mean', flag='read', data=GWratio, dim1name=grlnd, readvar=readvar)
-      if (.not. readvar) then
-         call shr_sys_abort(' ERROR: USGS GW ratio NOT on surfdata file'//&
-              errMsg(sourcefile, __LINE__)) 
-      end if
+      ! allocate(GWratio(bounds%begg:bounds%endg))
+      ! call ncd_io(ncid=ncid, varname='USGS_mean', flag='read', data=GWratio, dim1name=grlnd, readvar=readvar)
+      ! if (.not. readvar) then
+         ! call shr_sys_abort(' ERROR: USGS GW ratio NOT on surfdata file'//&
+              ! errMsg(sourcefile, __LINE__)) 
+      ! end if
      
-      !  Determine gridcell USGS GW Ratio
-      do g = bounds%begg,bounds%endg
-         grc%GW_ratio(g) = max(GWratio(g), 0.0_r8)
-      end do
+      ! !  Determine gridcell USGS GW Ratio
+      ! do g = bounds%begg,bounds%endg
+         ! grc%GW_ratio(g) = max(GWratio(g), 0.0_r8)
+      ! end do
   
-      ! Set Column USGS GW ratio	
-      do c = begc,endc
-         g = col%gridcell(c)
-         ! check for near zero slopes, set minimum value
-         col%GW_ratio(c) = max(GWratio(g), 0.0_r8)
-      end do
+      ! ! Set Column USGS GW ratio	
+      ! do c = begc,endc
+         ! g = col%gridcell(c)
+         ! ! check for near zero slopes, set minimum value
+         ! col%GW_ratio(c) = max(GWratio(g), 0.0_r8)
+      ! end do
 
-      deallocate(GWratio)
+      ! deallocate(GWratio)
   
 
-   end subroutine read_GWinput
+   ! end subroutine read_GWinput
 
    subroutine NeighborInit()
       !-----------------------------------------------------------------------
