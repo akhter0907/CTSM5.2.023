@@ -413,35 +413,35 @@ contains
     end if
     !Tanjila added
 
-    call restartvar(ncid=ncid, flag=flag, varname='WA', xtype=ncd_double,  & 
-         dim1name='column', &
-         long_name='water in the unconfined aquifer', units='mm', &
-         interpinic_flag='interp', readvar=readvar, data=this%wa_col)
+    ! call restartvar(ncid=ncid, flag=flag, varname='WA', xtype=ncd_double,  & 
+         ! dim1name='column', &
+         ! long_name='water in the unconfined aquifer', units='mm', &
+         ! interpinic_flag='interp', readvar=readvar, data=this%wa_col)
 
-    call restartvar(ncid=ncid, flag=flag, varname='Qgw_lateral', xtype=ncd_double,  & 
-         dim1name='column', &
-         long_name='Groundwater lateral water in the unconfined aquifer', units='mm/s', &
-         interpinic_flag='interp', readvar=readvar, data=this%Qgw_lateral_col)
+    ! call restartvar(ncid=ncid, flag=flag, varname='Qgw_lateral', xtype=ncd_double,  & 
+         ! dim1name='column', &
+         ! long_name='Groundwater lateral water in the unconfined aquifer', units='mm/s', &
+         ! interpinic_flag='interp', readvar=readvar, data=this%Qgw_lateral_col)
 
-    call restartvar(ncid=ncid, flag=flag, varname='Aq_Transmissivity', xtype=ncd_double,  & 
-         dim1name='column', &
-         long_name='Transmissivity of the unconfined aquifer', units='mm2/s', &
-         interpinic_flag='interp', readvar=readvar, data=this%AqTransmiss_col)
+    ! call restartvar(ncid=ncid, flag=flag, varname='Aq_Transmissivity', xtype=ncd_double,  & 
+         ! dim1name='column', &
+         ! long_name='Transmissivity of the unconfined aquifer', units='mm2/s', &
+         ! interpinic_flag='interp', readvar=readvar, data=this%AqTransmiss_col)
 
-    call restartvar(ncid=ncid, flag=flag, varname='Pumped_Wa', xtype=ncd_double,  & 
-         dim1name='column', &
-         long_name='Pumped water from the unconfined aquifer', units='mm/s', &
-         interpinic_flag='interp', readvar=readvar, data=this%Pump_wa_col)
+    ! call restartvar(ncid=ncid, flag=flag, varname='Pumped_Wa', xtype=ncd_double,  & 
+         ! dim1name='column', &
+         ! long_name='Pumped water from the unconfined aquifer', units='mm/s', &
+         ! interpinic_flag='interp', readvar=readvar, data=this%Pump_wa_col)
 
-    call restartvar(ncid=ncid, flag=flag, varname='QlatField_northing_grc', xtype=ncd_double,  & 
-         dim1name='gridcell', &
-         long_name='Northward groundwater lateral flow', units='mm', &
-         interpinic_flag='skip', readvar=readvar, data=this%QlatField_northing_grc)      
+    ! call restartvar(ncid=ncid, flag=flag, varname='QlatField_northing_grc', xtype=ncd_double,  & 
+         ! dim1name='gridcell', &
+         ! long_name='Northward groundwater lateral flow', units='mm', &
+         ! interpinic_flag='skip', readvar=readvar, data=this%QlatField_northing_grc)      
          
-    call restartvar(ncid=ncid, flag=flag, varname='QlatField_easting_grc', xtype=ncd_double,  & 
-         dim1name='gridcell', &
-         long_name='Eastward groundwater lateral flow', units='mm', &
-         interpinic_flag='skip', readvar=readvar, data=this%QlatField_easting_grc)
+    ! call restartvar(ncid=ncid, flag=flag, varname='QlatField_easting_grc', xtype=ncd_double,  & 
+         ! dim1name='gridcell', &
+         ! long_name='Eastward groundwater lateral flow', units='mm', &
+         ! interpinic_flag='skip', readvar=readvar, data=this%QlatField_easting_grc)
     !Tanjila added ends        
     call restartvar(ncid=ncid, flag=flag, varname='ZWT', xtype=ncd_double,  & 
          dim1name='column', &
