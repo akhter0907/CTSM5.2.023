@@ -12,6 +12,7 @@ module GroundwaterInitMod
    use domainMod             , only : ldomain
    use spmdMod               , only : MPI_REAL8, MPI_INTEGER, mpicom, npes, masterproc, iam
    use perf_mod              , only : t_startf, t_stopf
+   use clm_varctl            , only : iulog
    ! read_GWinput modules
    use shr_log_mod           , only : errMsg => shr_log_errMsg
    use shr_sys_mod           , only : shr_sys_abort
@@ -33,7 +34,7 @@ module GroundwaterInitMod
    ! Used to initialize and test unset integers
    integer, parameter, public :: gw_unset_int = -9999
 
-   logical :: debug = .false.  ! for debugging this module
+   logical :: debug = .true.  ! for debugging this module
 
    character(len=*), parameter, private :: sourcefile = &
          __FILE__
@@ -152,6 +153,7 @@ contains
       integer :: i, g_out, g_in, ni ! indices
       integer :: numg               ! number of land gridcells
       integer :: ier, mpierr        ! error status
+      logical :: found = .false.    ! Flag for neighbor found in gc_loop    
 
       integer, allocatable :: ncells_array(:), begg_array(:) ! number of cells and starting global grid cell index per process 
       
@@ -306,6 +308,8 @@ contains
          ! Seach all indices for neighbors to current grid cell index
          neighbor_search: do g_in = g_out+1,numg ! inner loop
 
+            found = .false. ! reset found to false for each search
+
             if(debug) write(*, *) 'DGCN: g_out,g_in: ', g_out, g_in
             
             if(debug) write(*, *) 'g_in: gclon, gclat: ', gclon(g_in), gclat(g_in)
@@ -314,76 +318,93 @@ contains
             latlon_check: if (gclon(g_out) == gclon(g_in) .and.  &
                gclat(g_out) == gclat(g_in) - delta_lat) then
                
-               ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
                ldecomp%gtop(g_out)      = g_in
 
-               ldecomp%gneighbors(g_in) = ldecomp%gneighbors(g_in) + 1
                ldecomp%gtop(g_in)      = g_out
+
+               found = .true.
 
             else if (gclon(g_out) == gclon(g_in) + delta_lon .and.  &
                      gclat(g_out) == gclat(g_in) - delta_lat) then
             
-               ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
                ldecomp%gtoplft(g_out)      = g_in
 
-               ldecomp%gneighbors(g_in) = ldecomp%gneighbors(g_in) + 1
                ldecomp%gbotrgt(g_in)      = g_out
+
+               found = .true.
 
             else if (gclon(g_out) == gclon(g_in) - delta_lon .and.  &
                      gclat(g_out) == gclat(g_in) - delta_lat) then
             
-               ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
                ldecomp%gtoprgt(g_out)      = g_in
 
-               ldecomp%gneighbors(g_in) = ldecomp%gneighbors(g_in) + 1
                ldecomp%gbotlft(g_in)      = g_out
+
+               found = .true.
          
             else if (gclon(g_out) == gclon(g_in)     .and.  &
                      gclat(g_out) == gclat(g_in) + delta_lat) then
                
-               ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
                ldecomp%gbot(g_out)      = g_in
 
-               ldecomp%gneighbors(g_in) = ldecomp%gneighbors(g_in) + 1
                ldecomp%gtop(g_in)      = g_out
+
+               found = .true.
 
             else if (gclon(g_out) == gclon(g_in) + delta_lon .and.  &
                      gclat(g_out) == gclat(g_in) + delta_lat) then
                
-               ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
                ldecomp%gbotlft(g_out)      = g_in
 
-               ldecomp%gneighbors(g_in) = ldecomp%gneighbors(g_in) + 1
                ldecomp%gtoprgt(g_in)      = g_out
+
+               found = .true.
 
             else if (gclon(g_out) == gclon(g_in) - delta_lon .and.  &
                      gclat(g_out) == gclat(g_in) + delta_lat) then
                
-               ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
                ldecomp%gbotrgt(g_out)      = g_in
 
-               ldecomp%gneighbors(g_in) = ldecomp%gneighbors(g_in) + 1
                ldecomp%gtoplft(g_in)      = g_out
+
+               found = .true.
             
             else if (gclon(g_out) == gclon(g_in) + delta_lon .and.  &
                      gclat(g_out) == gclat(g_in)) then
 
-               ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
                ldecomp%glft(g_out)      = g_in
 
-               ldecomp%gneighbors(g_in) = ldecomp%gneighbors(g_in) + 1
                ldecomp%grgt(g_in)      = g_out
+
+               found = .true.
 
             else if (gclon(g_out) == gclon(g_in) - delta_lon .and.  &
                      gclat(g_out) == gclat(g_in)) then
                
-               ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
                ldecomp%grgt(g_out)      = g_in
 
-               ldecomp%gneighbors(g_in) = ldecomp%gneighbors(g_in) + 1
                ldecomp%glft(g_in)      = g_out
 
+               found = .true.
+
             end if latlon_check
+
+            ! Increase gneighbor if found
+            when_found: if (found) then
+
+               ! g_out is neighbor of g_in and g_in is also a neighbor of g_out
+               ldecomp%gneighbors(g_out) = ldecomp%gneighbors(g_out) + 1
+               ldecomp%gneighbors(g_in) = ldecomp%gneighbors(g_in) + 1
+
+               print_neighbor: if (debug) then
+                  write(iulog,*) 'FOUND! g_out: gclon, gclat: ', gclon(g_out), gclat(g_out)
+                  write(iulog,*) 'FOUND! g_in: gclon, gclat: ', gclon(g_in), gclat(g_in)
+                  write(iulog,*) 'FOUND! g_out: gneighbors: ', ldecomp%gneighbors(g_out)
+                  write(iulog,*) 'FOUND! g_in: gneighbors: ', ldecomp%gneighbors(g_in)
+               end if print_neighbor
+
+            end if when_found
+
          end do neighbor_search
       end do gc_loop
 
