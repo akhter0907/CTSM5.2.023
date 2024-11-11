@@ -303,16 +303,16 @@ contains
       ! Iterate through the grid cell indices and determine if any neighboring cells are in range
       gc_loop: do g_out = 1,numg-1 ! outer loop
 
-         if(debug) write(*, *) 'g_out: gclon, gclat: ', gclon(g_out), gclat(g_out)
+         ! if(debug) write(*, *) 'g_out: gclon, gclat: ', gclon(g_out), gclat(g_out)
          
          ! Seach all indices for neighbors to current grid cell index
          neighbor_search: do g_in = g_out+1,numg ! inner loop
 
             found = .false. ! reset found to false for each search
 
-            if(debug) write(*, *) 'DGCN: g_out,g_in: ', g_out, g_in
+            ! if(debug) write(*, *) 'DGCN: g_out,g_in: ', g_out, g_in
             
-            if(debug) write(*, *) 'g_in: gclon, gclat: ', gclon(g_in), gclat(g_in)
+            ! if(debug) write(*, *) 'g_in: gclon, gclat: ', gclon(g_in), gclat(g_in)
 
             ! identify neighbors with the ixy, jxy indices of grid cells
             latlon_check: if (gclon(g_out) == gclon(g_in) .and.  &
@@ -397,10 +397,10 @@ contains
                ldecomp%gneighbors(g_in) = ldecomp%gneighbors(g_in) + 1
 
                print_neighbor: if (debug) then
-                  write(iulog,*) 'FOUND! g_out: gclon, gclat: ', gclon(g_out), gclat(g_out)
-                  write(iulog,*) 'FOUND! g_in: gclon, gclat: ', gclon(g_in), gclat(g_in)
-                  write(iulog,*) 'FOUND! g_out: gneighbors: ', ldecomp%gneighbors(g_out)
-                  write(iulog,*) 'FOUND! g_in: gneighbors: ', ldecomp%gneighbors(g_in)
+                  write(*,*) 'FOUND! g_out: gclon, gclat: ', gclon(g_out), gclat(g_out)
+                  write(*,*) 'FOUND! g_in: gclon, gclat: ', gclon(g_in), gclat(g_in)
+                  write(*,*) 'FOUND! g_out: gneighbors: ', ldecomp%gneighbors(g_out)
+                  write(*,*) 'FOUND! g_in: gneighbors: ', ldecomp%gneighbors(g_in)
                end if print_neighbor
 
             end if when_found

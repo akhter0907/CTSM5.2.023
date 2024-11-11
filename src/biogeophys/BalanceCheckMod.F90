@@ -732,6 +732,8 @@ contains
               write(iulog,*)'forc_snow                 = ',forc_snow_col(indexc)*dtime
               write(iulog,*)'lateralflow               = ',soilhydrology_inst%Qgw_lateral_col(indexc)*dtime
               write(iulog,*)'Pump_wa_col               = ',soilhydrology_inst%Pump_wa_col(indexc)*dtime
+              write(iulog,*)'GW_ratio                  = ',col%GW_ratio(indexc)  ! AmanS
+
               write(iulog,*)'endwb_col                 = ',endwb_col(indexc)
               write(iulog,*)'begwb_col                 = ',begwb_col(indexc)
 
