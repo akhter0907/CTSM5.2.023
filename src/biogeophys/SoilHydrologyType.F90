@@ -130,7 +130,8 @@ contains
     allocate(this%zwts_col          (begc:endc))                 ; this%zwts_col          (:)     = nan
 
     !Tanjila added
-    allocate(this%wa_col            (begc:endc))                 ; this%wa_col            (:)     = nan
+!     allocate(this%wa_col            (begc:endc))                 ; this%wa_col            (:)     = nan
+    ! AmanS: wa_col is in waterstate_inst. No need in soilhydrology_type
     allocate(this%Qgw_lateral_col   (begc:endc))                 ; this%Qgw_lateral_col   (:)     = nan
     allocate(this%AqTransmiss_col   (begc:endc))                 ; this%AqTransmiss_col   (:)     = nan
     allocate(this%Pump_wa_col       (begc:endc))                 ; this%Pump_wa_col       (:)     = nan

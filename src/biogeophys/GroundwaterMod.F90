@@ -175,7 +175,7 @@ contains
           watsat             =>    soilstate_inst%watsat_col             , & ! Input:  [real(r8) (:,:) ]  volumetric soil water at saturation (porosity)
 
           zwt                =>    soilhydrology_inst%zwt_col            , & ! Input and Output: [real(r8) (:)   ]  water table depth (m)                                        
-          wa                 =>    soilhydrology_inst%wa_col             , & ! Output: [real(r8) (:)   ]  water in the unconfined aquifer (mm)              
+          wa                 =>    waterstatebulk_inst%wa_col            , & ! Output: [real(r8) (:)   ]  water in the unconfined aquifer (mm)              
           qcharge            =>    soilhydrology_inst%qcharge_col        , & ! Input:  [real(r8) (:)   ]  aquifer recharge rate (mm/s)
           Qgw_lateral        =>    soilhydrology_inst%Qgw_lateral_col    , & ! Output: [real(r8) (:)   ]  GW lateral flow (mm)
           AqTransmiss        =>    soilhydrology_inst%AqTransmiss_col    , & ! Output: [real(r8) (:)   ]  Aquifer Transmissivity(mm2/s)
@@ -680,7 +680,7 @@ contains
           watsat             =>    soilstate_inst%watsat_col             , & ! Input:  [real(r8) (:,:) ]  volumetric soil water at saturation (porosity)
 
           zwt                =>    soilhydrology_inst%zwt_col                , & ! Input and Output: [real(r8) (:)   ]  water table depth (m)
-          wa                 =>    soilhydrology_inst%wa_col                 , & ! Output: [real(r8) (:)   ]  water in the unconfined aquifer (mm)
+          wa                 =>    waterstatebulk_inst%wa_col                , & ! Output: [real(r8) (:)   ]  water in the unconfined aquifer (mm)
           qcharge            =>    soilhydrology_inst%qcharge_col            , & ! Input:  [real(r8) (:)   ]  aquifer recharge rate (mm/s)
           Qgw_lateral        =>    soilhydrology_inst%Qgw_lateral_col        , & ! Output: [real(r8) (:)   ]  GW lateral flow (mm/s)
           AqTransmiss        =>    soilhydrology_inst%AqTransmiss_col        , & ! Output: [real(r8) (:)   ]  Aquifer Transmissivity(mm2/s)

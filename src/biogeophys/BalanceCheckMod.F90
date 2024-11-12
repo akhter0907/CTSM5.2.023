@@ -725,7 +725,7 @@ contains
               
               write(iulog,*)'CTSM is stopping because errh2o > ', error_thresh, ' mm'
               write(iulog,*)'soilhydrology_inst%zwt_col= ',soilhydrology_inst%zwt_col(indexc)
-              write(iulog,*)'soilhydrology_inst%wa_col = ',soilhydrology_inst%wa_col(indexc)
+              write(iulog,*)'waterstate_inst%wa_col    = ',waterstate_inst%wa_col(indexc)
               write(iulog,*)'nstep                     = ',nstep
               write(iulog,*)'errh2o_col                = ',errh2o_col(indexc)
               write(iulog,*)'forc_rain                 = ',forc_rain_col(indexc)*dtime
@@ -855,7 +855,7 @@ contains
 
              write(iulog,*)'CTSM is stopping because errh2o > ', error_thresh, ' mm'
              write(iulog,*)'soilhydrology_inst%zwt_col= ',soilhydrology_inst%zwt_col(indexg)
-             write(iulog,*)'soilhydrology_inst%wa_col = ',soilhydrology_inst%wa_col(indexg)
+             write(iulog,*)'waterstate_inst%wa_col    = ',waterstate_inst%wa_col(indexg)
              write(iulog,*)'nstep                     = ',nstep
              write(iulog,*)'errh2o_grc                = ',errh2o_grc(indexg)
              write(iulog,*)'forc_rain                 = ',forc_rain_grc(indexg)*dtime
