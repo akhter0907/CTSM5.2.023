@@ -55,6 +55,9 @@ module GroundwaterMod
 
   ! !PUBLIC TYPES:
   implicit none
+
+  logical :: debug = .true.  ! for debugging this module
+
   private
   
    type, public :: groundwater_type
@@ -113,7 +116,7 @@ contains
 
     ! !LOCAL VARIABLES:	
  
-    character(len=32) :: subname = 'GroundwaterMod' ! subroutine name 
+    character(len=32) :: subname = 'UpdateGWFanLatPump' ! subroutine name 
     real(r8), pointer :: zwt_long(:)        , zwt_glob(:)            ! GW_out array for all grid cells; complete grid cell array of GW_out
     real(r8), pointer :: Qn_glob(:)                                  ! Lateral flow in (mm3)
     real(r8), pointer :: g_totCweight(:)
@@ -466,9 +469,22 @@ contains
 
              end if
 
+
+             ! AmanS: Print components of lateral flow for debug
+             if (debug .and. masterproc) then
+                 100 format(A20, A, I0, A, E12.3)
+                 write(iulog, *) 'nstep = ', nstep
+                 write(iulog, 100) subname, 'g =', g, ': Qn_glob(g) = ', Qn_glob(g)
+                 write(iulog, 100) subname, 'g =', g, ': widMean    = ', widMean
+                 write(iulog, 100) subname, 'g =', g, ': AqTransmissMean = ', AqTransmissMean
+                 write(iulog, 100) subname, 'g =', g, ': lenMean    = ', lenMean
+               !   write(iulog, 100) subname, 'g =', g, ': dtime      = ', dtime ! default dtime = 1800
+             end if
           ! IF there is pumping, the GW lateral flow is ruled by Combination of Darcy's and Theim
           ! else if (ZeroHydroCell_glob(g)== 0 .and. GW_ratio_long(g) * qirrig_long(g) > 0._r8) then
 
+             ! AmanS: just set Qn_glob(g) to zero to debug
+            !  Qn_glob(g) = 10.0_r8
           end if
        end do
    
@@ -482,14 +498,47 @@ contains
        ! end if
        ! convert m to mm water
 
+       do g = 1, ng
+         ! AmanS: initialize to zero
+         soilhydrology_inst%Qgw_lateral_grc(g) = 0.0_r8
+       end do
+       if (debug .and. masterproc) then
+         200 format(A20, 1X, A, 1X, I0, 2X, A, 1X, I0, 3X, A, E12.3)
+         g=555 ! random grid
+         write(iulog, *) 'CHECK g = 555'
+         write(iulog, 200) subname, 'g =', g, 'c =', c, ': Qgw_lateral_grc(g) = ', soilhydrology_inst%Qgw_lateral_grc(g)
+         ! should be zero
+       end if
 
        do fc = 1, num_hydrologyc
           c = filter_hydrologyc(fc)
           g = col%gridcell(c)
 
           aRatio  = col%wtgcell(c) / g_totCweight(g)
+          ! AmanS: need to divide by colArea to convert mm3/s to mm/s
           colArea = col%wtgcell(c) * grc%area(g) * km2_to_mm2
-          Qgw_lateral(c) = Qn_glob(g) * aRatio / colArea  !unit is mm 
+          Qgw_lateral(c) = Qn_glob(g) * aRatio / colArea  !unit is mm
+
+          if (debug .and. masterproc) then
+            300 format(A20, 1X, A, 1X, I0, 2X, A, 1X, I0, 3X, A, E12.3)
+            write(iulog, *) 'CHECK BEGIN before Qgw_lateral_grc g = 555'
+            write(iulog, 300) subname, 'g =', g, 'c =', c, ': Qgw_lateral_grc(g) = ', soilhydrology_inst%Qgw_lateral_grc(g)
+            write(iulog, 300) subname, 'g =', g, 'c =', c, ': Qgw_lateral_grc(g) = ', soilhydrology_inst%Qgw_lateral_grc(g) + Qgw_lateral(c)
+            write(iulog, *) 'CHECK END before Qgw_lateral_grc g = 555'
+          end if
+
+          ! AmanS: grid level lateral flow for balance check
+          soilhydrology_inst%Qgw_lateral_grc(g) = soilhydrology_inst%Qgw_lateral_grc(g) + Qgw_lateral(c)
+
+          if (debug .and. masterproc) then
+            400 format(A20, 1X, A, 1X, I0, 2X, A, 1X, I0, 3X, A, E12.3)
+            write(iulog, *) 'nstep = ', nstep
+            write(iulog, 400) subname, 'g =', g, 'c =', c, ': aRatio = ', aRatio
+            write(iulog, 400) subname, 'g =', g, 'c =', c, ': colArea = ', colArea
+            write(iulog, 400) subname, 'g =', g, 'c =', c, ': Qgw_lateral(c) = ', Qgw_lateral(c)
+            write(iulog, 400) subname, 'g =', g, 'c =', c, ': Qgw_lateral_grc(g) = ', soilhydrology_inst%Qgw_lateral_grc(g)
+            ! write(iulog, 400) subname, 'g =', g, 'c =', c, ': Qn_glob(g) = ', Qn_glob(g)
+          end if
 
           rous = watsat(c,nlevsoi) &
                * ( 1. - (1.+1.e3*zwt(c)/sucsat(c,nlevsoi))**(-1./bsw(c,nlevsoi)))

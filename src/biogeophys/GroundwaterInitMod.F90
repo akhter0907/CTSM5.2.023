@@ -34,7 +34,7 @@ module GroundwaterInitMod
    ! Used to initialize and test unset integers
    integer, parameter, public :: gw_unset_int = -9999
 
-   logical :: debug = .true.  ! for debugging this module
+   logical :: debug = .false.  ! for debugging this module
 
    character(len=*), parameter, private :: sourcefile = &
          __FILE__
@@ -163,8 +163,8 @@ contains
          )
 
       ! For test only at 0.9x1.25 resolution
-      delta_lat = 0.9_r8 
-      delta_lon = 1.25_r8
+      delta_lat = 0.5_r8 
+      delta_lon = 0.5_r8
 
       ! Get total number of grid cells
       call get_proc_global(ng=numg)

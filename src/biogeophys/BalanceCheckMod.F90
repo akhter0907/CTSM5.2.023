@@ -553,6 +553,12 @@ contains
           qflx_snwcp_discarded_ice_col => waterflux_inst%qflx_snwcp_discarded_ice_col, & ! Input: [real(r8) (:)] column level excess solid h2o due to snow capping, which we simply discard in order to reset the snow pack (mm H2O /s) [+]
           qflx_evap_tot_col       =>    waterflux_inst%qflx_evap_tot_col        , & ! Input:  [real(r8) (:)   ]  column level qflx_evap_soi + qflx_evap_can + qflx_tran_veg
           qflx_evap_tot_grc       =>    waterlnd2atm_inst%qflx_evap_tot_grc     , & ! Input:  [real(r8) (:)   ]  grid cell-level qflx_evap_soi + qflx_evap_can + qflx_tran_veg
+
+          ! AmanS
+          qflx_evap_soi_col       =>    waterflux_inst%qflx_evap_soi_col        , & ! Input:  [real(r8) (:)   ]  column level qflx_evap_soi
+          qflx_evap_can_col       =>    waterflux_inst%qflx_evap_can_col        , & ! Input:  [real(r8) (:)   ]  column level qflx_evap_can
+          qflx_tran_veg_col       =>    waterflux_inst%qflx_tran_veg_col        , & ! Input:  [real(r8) (:)   ]  column level qflx_tran_veg
+
           qflx_soliddew_to_top_layer    => waterflux_inst%qflx_soliddew_to_top_layer_col   , & ! Input:  [real(r8) (:)   ]  rate of solid water deposited on top soil or snow layer (frost) (mm H2O /s) [+]
           qflx_solidevap_from_top_layer => waterflux_inst%qflx_solidevap_from_top_layer_col, & ! Input:  [real(r8) (:)   ]  rate of ice evaporated from top soil or snow layer (sublimation) (mm H2O /s) [+]
           qflx_liqevap_from_top_layer   => waterflux_inst%qflx_liqevap_from_top_layer_col  , & ! Input:  [real(r8) (:)   ]  rate of liquid water evaporated from top soil or snow layer (mm H2O/s) [+]
@@ -738,6 +744,12 @@ contains
               write(iulog,*)'begwb_col                 = ',begwb_col(indexc)
 
               write(iulog,*)'qflx_evap_tot             = ',qflx_evap_tot_col(indexc)*dtime
+              
+              ! AmanS
+              write(iulog,*)'qflx_evap_soi             = ',qflx_evap_soi_col(indexc)*dtime
+              write(iulog,*)'qflx_evap_can             = ',qflx_evap_can_col(indexc)*dtime
+              write(iulog,*)'qflx_tran_veg             = ',qflx_tran_veg_col(indexc)*dtime
+
               write(iulog,*)'qflx_sfc_irrig            = ',qflx_sfc_irrig_col(indexc)*dtime
               write(iulog,*)'qflx_surf                 = ',qflx_surf_col(indexc)*dtime
               write(iulog,*)'qflx_qrgwl                = ',qflx_qrgwl_col(indexc)*dtime
@@ -813,7 +825,7 @@ contains
                       + forc_flood_grc(g)  &
                       + qflx_sfc_irrig_grc(g)  &
                       - soilhydrology_inst%Pump_wa_col(g)&
-                      + soilhydrology_inst%Qgw_lateral_col(g) &
+                      + soilhydrology_inst%Qgw_lateral_grc(g) &
                       + qflx_glcice_dyn_water_flux_grc(g)  &
                       - qflx_evap_tot_grc(g)  &
                       - qflx_surf_grc(g)  &
@@ -828,7 +840,7 @@ contains
              call endrun(subname // ':: the groundwater scheme must be specified !')
 
        end select  ! case for the lower boundary condition
-     
+       
        ! add landunit level flux variable, convert from (m3/s) to (kg m-2 s-1)
        if (use_hillslope_routing) then
           ! output water flux from streamflow (+)
@@ -860,7 +872,7 @@ contains
              write(iulog,*)'errh2o_grc                = ',errh2o_grc(indexg)
              write(iulog,*)'forc_rain                 = ',forc_rain_grc(indexg)*dtime
              write(iulog,*)'forc_snow                 = ',forc_snow_grc(indexg)*dtime
-             write(iulog,*)'lateralflow               = ',soilhydrology_inst%Qgw_lateral_col(indexg)*dtime
+             write(iulog,*)'lateralflow               = ',soilhydrology_inst%Qgw_lateral_grc(indexg)*dtime
              write(iulog,*)'Pump_wa_col               = ',soilhydrology_inst%Pump_wa_col(indexg)*dtime
              write(iulog,*)'endwb_grc                 = ',endwb_grc(indexg)
              write(iulog,*)'begwb_grc                 = ',begwb_grc(indexg)

@@ -28,6 +28,7 @@ Module SoilHydrologyType
      !Tanjila added
      real(r8), pointer :: wa_col            (:)     ! col water in the unconfined aquifer (mm)
      real(r8), pointer :: Qgw_lateral_col   (:)     ! col Groundwater lateral flow (mm/s)
+     real(r8), pointer :: Qgw_lateral_grc   (:)     ! grc Groundwater lateral flow (mm/s) AmanS added for balance check
      real(r8), pointer :: AqTransmiss_col   (:)     ! col Aquifer Transmissivity (mm)
      real(r8), pointer :: Pump_wa_col       (:)     ! col pumped water (mm/s)
      real(r8), pointer :: QlatField_northing_grc (:)! grc Groundwater lateral flow towards north (+)(mm)
@@ -133,6 +134,8 @@ contains
 !     allocate(this%wa_col            (begc:endc))                 ; this%wa_col            (:)     = nan
     ! AmanS: wa_col is in waterstate_inst. No need in soilhydrology_type
     allocate(this%Qgw_lateral_col   (begc:endc))                 ; this%Qgw_lateral_col   (:)     = nan
+    ! AmanS
+    allocate(this%Qgw_lateral_grc   (begc:endc))                 ; this%Qgw_lateral_grc   (:)     = nan
     allocate(this%AqTransmiss_col   (begc:endc))                 ; this%AqTransmiss_col   (:)     = nan
     allocate(this%Pump_wa_col       (begc:endc))                 ; this%Pump_wa_col       (:)     = nan
     allocate(this%QlatField_northing_grc (begg:endg))            ; this%QlatField_northing_grc(:) = nan
