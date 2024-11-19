@@ -509,7 +509,8 @@ contains
      real(r8) :: qflx_glcice_dyn_water_flux_grc(bounds%begg:bounds%endg)  ! grid cell-level water flux needed for balance check due to glc_dyn_runoff_routing [mm H2O/s] (positive means addition of water to the system)
      real(r8) :: qflx_snwcp_discarded_liq_grc(bounds%begg:bounds%endg)  ! grid cell-level excess liquid h2o due to snow capping, which we simply discard in order to reset the snow pack [mm H2O /s]
      real(r8) :: qflx_snwcp_discarded_ice_grc(bounds%begg:bounds%endg)  ! grid cell-level excess solid h2o due to snow capping, which we simply discard in order to reset the snow pack [mm H2O /s]
-
+     real(r8) :: pump_wa_grc(bounds%begg:bounds%endg)   !Grid-cell level pumped wa
+	 real(r8) :: Qgw_lateral_grc(bounds%begg:bounds%endg)   !Grid-cell level lateral flow
      real(r8) :: errh2o_max_val                         ! Maximum value of error in water conservation error  over all columns [mm H2O]
      real(r8) :: errh2osno_max_val                      ! Maximum value of error in h2osno conservation error over all columns [kg m-2]
      real(r8) :: errsol_max_val                         ! Maximum value of error in solar radiation conservation error over all columns [W m-2]
@@ -518,6 +519,7 @@ contains
      real(r8) :: errsoi_col_max_val                     ! Maximum value of column-level soil/lake energy conservation error over all columns [W m-2]
 
      real(r8), parameter :: h2o_warning_thresh       = 1.e-9_r8                       ! Warning threshhold for error in errh2o and errh2osnow 
+	 !real(r8), parameter :: h2o_warning_thresh1      = 1.e-1_r8                      ! Warning threshhold for error in errh2o and errh2osnow
      real(r8), parameter :: energy_warning_thresh    = 1.e-7_r8                       ! Warning threshhold for error in errsol, errsol, errseb, errlonv
      real(r8), parameter :: error_thresh             = 1.e-5_r8                       ! Error threshhold for conservation error
      character(*), parameter    :: subname = "('BalanceCheck')" !Tanjila
@@ -655,7 +657,7 @@ contains
                       + forc_snow_col(c)         &
                       + qflx_flood_col(c)        &
                       + qflx_sfc_irrig_col(c)    &
-                      - soilhydrology_inst%Pump_wa_col(c)&
+                      - soilhydrology_inst%Pump_wa_col(c)& 
                       + qflx_glcice_dyn_water_flux_col(c) &
                       - qflx_evap_tot_col(c)     &
                       - qflx_surf_col(c)         &
@@ -685,8 +687,8 @@ contains
                       + forc_snow_col(c)         &
                       + qflx_flood_col(c)        &
                       + qflx_sfc_irrig_col(c)    &
-                      - soilhydrology_inst%Pump_wa_col(c)&
-                      + soilhydrology_inst%Qgw_lateral_col(c) &
+                      - soilhydrology_inst%Pump_wa_col(c) & 
+                      
                       + qflx_glcice_dyn_water_flux_col(c) &
                       - qflx_evap_tot_col(c)     &
                       - qflx_surf_col(c)         &
@@ -695,7 +697,8 @@ contains
                       - qflx_drain_perched_col(c) &
                       - qflx_ice_runoff_col(c)   &
                       - qflx_snwcp_discarded_liq_col(c) &
-                      - qflx_snwcp_discarded_ice_col(c)) * dtime
+                      - qflx_snwcp_discarded_ice_col(c)) * dtime &
+					  - soilhydrology_inst%Qgw_lateral_col(c) * dtime
 
                    else
 
@@ -725,12 +728,12 @@ contains
               
               write(iulog,*)'CTSM is stopping because errh2o > ', error_thresh, ' mm'
               write(iulog,*)'soilhydrology_inst%zwt_col= ',soilhydrology_inst%zwt_col(indexc)
-              write(iulog,*)'soilhydrology_inst%wa_col = ',soilhydrology_inst%wa_col(indexc)
+              write(iulog,*)'waterstate_inst%wa_col = ',waterstate_inst%wa_col(indexc)
               write(iulog,*)'nstep                     = ',nstep
               write(iulog,*)'errh2o_col                = ',errh2o_col(indexc)
               write(iulog,*)'forc_rain                 = ',forc_rain_col(indexc)*dtime
               write(iulog,*)'forc_snow                 = ',forc_snow_col(indexc)*dtime
-              write(iulog,*)'lateralflow               = ',soilhydrology_inst%Qgw_lateral_col(indexc)*dtime
+              write(iulog,*)'lateralflow               = ',soilhydrology_inst%Qgw_lateral_col(indexc)*dtime !Tanjila
               write(iulog,*)'Pump_wa_col               = ',soilhydrology_inst%Pump_wa_col(indexc)*dtime
               write(iulog,*)'GW_ratio                  = ',col%GW_ratio(indexc)  ! AmanS
 
@@ -779,8 +782,17 @@ contains
          qflx_snwcp_discarded_ice_col(bounds%begc:bounds%endc),  &
          qflx_snwcp_discarded_ice_grc(bounds%begg:bounds%endg),  &
          c2l_scale_type= 'urbanf', l2g_scale_type='unity' )
-       
-       
+       !Tanjila: calculate grid-level pump_wa
+	   ! call c2g( bounds, &
+         ! soilhydrology_inst%Pump_wa_col(bounds%begc:bounds%endc), &
+         ! Pump_wa_grc(bounds%begg:bounds%endg), &
+         ! c2l_scale_type= 'urbanf', l2g_scale_type='unity' )
+	   !Tanjila: calculate grid-level Qgw_lateral
+       call c2g( bounds, &
+         soilhydrology_inst%Qgw_lateral_col(bounds%begc:bounds%endc), &
+         Qgw_lateral_grc(bounds%begg:bounds%endg), &
+         c2l_scale_type= 'urbanf', l2g_scale_type='unity' ) 
+		 
        select case(groundwater_scheme)
 
           ! Groundwater scheme: Default
@@ -792,7 +804,7 @@ contains
                       + forc_snow_grc(g)  &
                       + forc_flood_grc(g)  &
                       + qflx_sfc_irrig_grc(g)  &
-                      - soilhydrology_inst%Pump_wa_col(g)&
+                      !- Pump_wa_grc(g) & Tanjila: Not needed as qirrig_grc is already adjusted for pump
                       + qflx_glcice_dyn_water_flux_grc(g)  &
                       - qflx_evap_tot_grc(g)  &
                       - qflx_surf_grc(g)  &
@@ -812,8 +824,8 @@ contains
                       + forc_snow_grc(g)  &
                       + forc_flood_grc(g)  &
                       + qflx_sfc_irrig_grc(g)  &
-                      - soilhydrology_inst%Pump_wa_col(g)&
-                      + soilhydrology_inst%Qgw_lateral_col(g) &
+                      !- Pump_wa_grc(g)& Tanjila: Not needed as qirrig_grc is already adjusted for pump
+                      
                       + qflx_glcice_dyn_water_flux_grc(g)  &
                       - qflx_evap_tot_grc(g)  &
                       - qflx_surf_grc(g)  &
@@ -822,7 +834,8 @@ contains
                       - qflx_drain_perched_grc(g)  &
                       - qflx_ice_runoff_grc(g)  &
                       - qflx_snwcp_discarded_liq_grc(g)  &
-                      - qflx_snwcp_discarded_ice_grc(g)) * dtime
+                      - qflx_snwcp_discarded_ice_grc(g)) * dtime &
+					  - Qgw_lateral_grc(g) * dtime
                end do
           case default
              call endrun(subname // ':: the groundwater scheme must be specified !')
@@ -855,13 +868,14 @@ contains
 
              write(iulog,*)'CTSM is stopping because errh2o > ', error_thresh, ' mm'
              write(iulog,*)'soilhydrology_inst%zwt_col= ',soilhydrology_inst%zwt_col(indexg)
-             write(iulog,*)'soilhydrology_inst%wa_col = ',soilhydrology_inst%wa_col(indexg)
+             write(iulog,*)'waterstate_inst%wa_col = ',waterstate_inst%wa_col(indexg)
              write(iulog,*)'nstep                     = ',nstep
              write(iulog,*)'errh2o_grc                = ',errh2o_grc(indexg)
              write(iulog,*)'forc_rain                 = ',forc_rain_grc(indexg)*dtime
              write(iulog,*)'forc_snow                 = ',forc_snow_grc(indexg)*dtime
-             write(iulog,*)'lateralflow               = ',soilhydrology_inst%Qgw_lateral_col(indexg)*dtime
-             write(iulog,*)'Pump_wa_col               = ',soilhydrology_inst%Pump_wa_col(indexg)*dtime
+             write(iulog,*)'lateralflow               = ',Qgw_lateral_grc(indexg)!*dtime !Tanjila
+             write(iulog,*)'Pump_wa_grc               = ',Pump_wa_grc(indexg)*dtime
+	     write(iulog,*)'GW_ratio                  = ',grc%GW_ratio(indexg)  !Tanjila grc%GW_ratio(g)
              write(iulog,*)'endwb_grc                 = ',endwb_grc(indexg)
              write(iulog,*)'begwb_grc                 = ',begwb_grc(indexg)
 

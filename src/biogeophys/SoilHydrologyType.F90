@@ -130,7 +130,7 @@ contains
     allocate(this%zwts_col          (begc:endc))                 ; this%zwts_col          (:)     = nan
 
     !Tanjila added
-    allocate(this%wa_col            (begc:endc))                 ; this%wa_col            (:)     = nan
+    !allocate(this%wa_col            (begc:endc))                 ; this%wa_col            (:)     = nan !AmanS: wa_col is in waterstate_inst. No need in soilhydrology_type
     allocate(this%Qgw_lateral_col   (begc:endc))                 ; this%Qgw_lateral_col   (:)     = nan
     allocate(this%AqTransmiss_col   (begc:endc))                 ; this%AqTransmiss_col   (:)     = nan
     allocate(this%Pump_wa_col       (begc:endc))                 ; this%Pump_wa_col       (:)     = nan
@@ -208,6 +208,7 @@ contains
        call hist_addfld1d (fname='Aq_Transmissivity',  units='mm2/s',  &
             avgflag='A', long_name='Transmissivity of the unconfined aquifer (vegetated landunits only)', &
             ptr_col=this%AqTransmiss_col, l2g_scale_type='veg')
+
 
        this%Pump_wa_col(begc:endc) = spval
        call hist_addfld1d (fname='Pumped_Wa',  units='mm/s',  &
@@ -299,23 +300,21 @@ contains
     !-----------------------------------------------------------------------
 
     this%zwt_col(bounds%begc:bounds%endc) = 0._r8
-    !this%wa_col(bounds%begc:bounds%endc)  = aquifer_water_baseline !!check Tanjila
     !Tanjila
     this%Qgw_lateral_col(bounds%begc:bounds%endc) = 0._r8
     this%AqTransmiss_col(bounds%begc:bounds%endc) = 0._r8
     this%Pump_wa_col(bounds%begc:bounds%endc) = 0._r8
 
-    ! AmanS: only read wtd_Fan if not default groundwater scheme
-    if(groundwater_scheme /= 0) then
-        allocate(wtd_Fan(bounds%begg:bounds%endg))
-        call getfil (fsurdat, locfn, 0)
-        call ncd_pio_openfile (ncid, locfn, 0)
+ 
+    allocate(wtd_Fan(bounds%begg:bounds%endg))
+    call getfil (fsurdat, locfn, 0)
+    call ncd_pio_openfile (ncid, locfn, 0)
 
-        call ncd_io(ncid=ncid, varname='WTD', flag='read', data=wtd_Fan, dim1name=grlnd, readvar=readvar)
-        if (.not. readvar) then
+    call ncd_io(ncid=ncid, varname='WTD', flag='read', data=wtd_Fan, dim1name=grlnd, readvar=readvar)
+    if (.not. readvar) then
         call endrun(msg=' ERROR: WTD NOT on surfdata file'//errMsg(sourcefile, __LINE__)) 
-        end if	
-    end if
+    end if	
+
 
     do c = bounds%begc,bounds%endc
        l = col%landunit(c)
@@ -334,12 +333,10 @@ contains
                    ! Note that the following hard-coded constants (on the next line)
                    ! seem implicitly related to the initial value of wa_col
                    
-                   ! AmanS: Use wtd_Fan only if groundwater_scheme is not default (0)
-                   if (groundwater_scheme == 0) then
-                      this%zwt_col(c) = (25._r8 + col%zi(c,nlevsoi)) - waterstatebulk_inst%wa_col(c)/0.2_r8 /1000._r8  ! One meter below soil column
-                   else if (groundwater_scheme /= 0) then
-                      this%zwt_col(c) = wtd_Fan(g)
-                   end if
+                   !this%zwt_col(c) = (25._r8 + col%zi(c,nlevsoi)) - waterstatebulk_inst%wa_col(c)/0.2_r8 /1000._r8  ! One meter below soil column
+
+                   this%zwt_col(c) = wtd_Fan(g)
+
                 else
                    this%zwt_col(c) = col%zi(c,col%nbedrock(c))
                 end if
@@ -362,14 +359,10 @@ contains
                 ! Note that the following hard-coded constants (on the next line) seem
                 ! implicitly related to the initial value of wa_col
 
-                ! AmanS: Use wtd_Fan only if groundwater_scheme is not default (0)
-                if (groundwater_scheme == 0) then
-                    this%zwt_col(c) = (25._r8 + col%zi(c,nlevsoi)) - waterstatebulk_inst%wa_col(c)/0.2_r8 /1000._r8
-                else if (groundwater_scheme /= 0) then
-                    this%zwt_col(c) = wtd_Fan(g)
-                end if
-    
-                ! Aman
+                !this%zwt_col(c) = (25._r8 + col%zi(c,nlevsoi)) - waterstatebulk_inst%wa_col(c)/0.2_r8 /1000._r8
+
+                this%zwt_col(c) = wtd_Fan(g)
+
                 ! write(*,*) 'Felfelani      WTD Fan et al soilhydrology_inst%zwt_col(c), wtd_Fan(g)', soilhydrology_inst%zwt_col(c), wtd_Fan(g)
              else
                 this%zwt_col(c) = col%zi(c,col%nbedrock(c))
@@ -382,7 +375,7 @@ contains
        end if
     end do
 
-    if(groundwater_scheme /= 0) deallocate(wtd_Fan) ! AmanS
+        deallocate(wtd_Fan) ! AmanS
 
   end subroutine InitCold
 

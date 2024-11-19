@@ -149,11 +149,11 @@ contains
   !------------------------------------------------------------------------
   subroutine lnd2atm(bounds, &
        atm2lnd_inst, surfalb_inst, temperature_inst, frictionvel_inst, &
-       water_inst, &
+       water_inst, & 
        energyflux_inst, solarabs_inst, drydepvel_inst,  &
        vocemis_inst, fireemis_inst, dust_emis_inst, ch4_inst, glc_behavior, &
        lnd2atm_inst, &
-       net_carbon_exchange_grc)
+       net_carbon_exchange_grc) 
     !
     ! !DESCRIPTION:
     ! Compute lnd2atm_inst component of gridcell derived type
@@ -479,7 +479,6 @@ contains
          qflx_adjusted_irrig_col(bounds%begc:bounds%endc), &
          water_inst%waterlnd2atmbulk_inst%qirrig_grc(bounds%begg:bounds%endg), &
          c2l_scale_type= 'urbanf', l2g_scale_type='unity' )
-
     call c2g( bounds, &
          water_inst%waterlnd2atmbulk_inst%qflx_ice_runoff_col(bounds%begc:bounds%endc),  &
          water_inst%waterlnd2atmbulk_inst%qflx_rofice_grc(bounds%begg:bounds%endg),  &

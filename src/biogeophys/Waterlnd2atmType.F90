@@ -38,6 +38,7 @@ module Waterlnd2atmType
      real(r8), pointer :: qflx_liq_from_ice_col(:) ! liquid runoff from converted ice runoff
      real(r8), pointer :: qirrig_grc         (:)   ! irrigation flux
 
+
    contains
 
      procedure, public  :: Init
@@ -141,7 +142,6 @@ contains
          container = tracer_vars, &
          bounds = bounds, subgrid_level = subgrid_level_gridcell, &
          ival=ival)
-
   end subroutine InitAllocate
 
   !------------------------------------------------------------------------

@@ -52,6 +52,8 @@ contains
     use clm_varctl , only : nsegspc
     use decompMod  , only : gindex_global, nclumps, clumps
     use decompMod  , only : bounds_type, get_proc_bounds, procinfo
+    use spmdMod,    only : MPI_REAL8, MPI_SUM, mpicom !Tanjila added to FF_input
+    use domainMod , only : ldomain !Tanjila added to FF_input
     !
     ! !ARGUMENTS:
     integer , intent(in) :: amask(:)
@@ -66,7 +68,7 @@ contains
     real(r8):: seglen                 ! average segment length
     real(r8):: rcid                   ! real value of cid
     integer :: cid,pid                ! indices
-    integer :: n,m,ng                 ! indices
+    integer :: n,m,ng, g, nc, gdc     ! indices !Tanjila added to FF_input
     integer :: ier                    ! error code
     integer :: begg, endg             ! beg and end gridcells
     integer, pointer  :: clumpcnt(:)  ! clump index counter
@@ -241,6 +243,8 @@ contains
     ! Set gindex_global
 
     allocate(gdc2glo(numg), stat=ier)
+	allocate(ldecomp%ixy(numg), stat=ier) !Added to FF_input branch
+    allocate(ldecomp%jxy(numg), stat=ier)  !Added to FF_input branch
     if (ier /= 0) then
        write(iulog,*) 'decompInit_lnd(): allocation error1 for gdc2glo , etc'
        call endrun(msg=errMsg(sourcefile, __LINE__))
@@ -277,7 +281,10 @@ contains
        cid = lcid(an)
        if (cid > 0) then
           ag = clumpcnt(cid)
-          gdc2glo(ag) = an		  
+          gdc2glo(ag) = an	
+          ldecomp%ixy(ag) = ai !Added to FF_input branch
+          ldecomp%jxy(ag) = aj  
+		  		  
           clumpcnt(cid) = clumpcnt(cid) + 1
        end if
     end do

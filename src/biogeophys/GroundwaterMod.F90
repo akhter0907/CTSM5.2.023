@@ -175,9 +175,10 @@ contains
           watsat             =>    soilstate_inst%watsat_col             , & ! Input:  [real(r8) (:,:) ]  volumetric soil water at saturation (porosity)
 
           zwt                =>    soilhydrology_inst%zwt_col            , & ! Input and Output: [real(r8) (:)   ]  water table depth (m)                                        
-          wa                 =>    soilhydrology_inst%wa_col             , & ! Output: [real(r8) (:)   ]  water in the unconfined aquifer (mm)              
+          wa                 =>    waterstatebulk_inst%wa_col             , & ! Output: [real(r8) (:)   ]  water in the unconfined aquifer (mm)   !Aman changed to waterstatebulk_inst           
           qcharge            =>    soilhydrology_inst%qcharge_col        , & ! Input:  [real(r8) (:)   ]  aquifer recharge rate (mm/s)
           Qgw_lateral        =>    soilhydrology_inst%Qgw_lateral_col    , & ! Output: [real(r8) (:)   ]  GW lateral flow (mm)
+		  !Qn_glob            =>    soilhydrology_inst%Qn_glob            , &  ! Output: [real(r8) (:)   ]  gridcell GW lateral flow (mm) !Tanjila
           AqTransmiss        =>    soilhydrology_inst%AqTransmiss_col    , & ! Output: [real(r8) (:)   ]  Aquifer Transmissivity(mm2/s)
           Pump_wa            =>    soilhydrology_inst%Pump_wa_col        , & ! Output: [real(r8) (:)   ]  Pumped Water from the aquifer(mm)
 
@@ -463,12 +464,13 @@ contains
                  lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%glft(g)))) * km_to_mm / 2._r8
                  widMean = lenMean * sqrt(0.5_r8 * tan(rpi/8._r8))
                  Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%glft(g))) * m_to_mm * dtime / lenMean
-
+                 
              end if
 
           ! IF there is pumping, the GW lateral flow is ruled by Combination of Darcy's and Theim
           ! else if (ZeroHydroCell_glob(g)== 0 .and. GW_ratio_long(g) * qirrig_long(g) > 0._r8) then
-
+          Qn_glob(g) = Qn_glob(g)/dtime !Tanjila Dividing by dtime if it is redundant
+		  
           end if
        end do
    
@@ -680,9 +682,10 @@ contains
           watsat             =>    soilstate_inst%watsat_col             , & ! Input:  [real(r8) (:,:) ]  volumetric soil water at saturation (porosity)
 
           zwt                =>    soilhydrology_inst%zwt_col                , & ! Input and Output: [real(r8) (:)   ]  water table depth (m)
-          wa                 =>    soilhydrology_inst%wa_col                 , & ! Output: [real(r8) (:)   ]  water in the unconfined aquifer (mm)
+          wa                 =>    waterstatebulk_inst%wa_col                 , & ! Output: [real(r8) (:)   ]  water in the unconfined aquifer (mm) !Aman changed to waterstatebulk_inst
           qcharge            =>    soilhydrology_inst%qcharge_col            , & ! Input:  [real(r8) (:)   ]  aquifer recharge rate (mm/s)
           Qgw_lateral        =>    soilhydrology_inst%Qgw_lateral_col        , & ! Output: [real(r8) (:)   ]  GW lateral flow (mm/s)
+		  !Qn_glob            =>    soilhydrology_inst%Qn_glob            , &  ! Output: [real(r8) (:)   ]  gridcell GW lateral flow (mm) !Tanjila
           AqTransmiss        =>    soilhydrology_inst%AqTransmiss_col        , & ! Output: [real(r8) (:)   ]  Aquifer Transmissivity(mm2/s)
           Pump_wa            =>    soilhydrology_inst%Pump_wa_col            , & ! Output: [real(r8) (:)   ]  Pumped Water from the aquifer(mm/s)
           QlatField_north    =>    soilhydrology_inst%QlatField_northing_grc , & !  Output: [real(r8) (:)   ] Northward lateral GW flow
