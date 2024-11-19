@@ -135,7 +135,7 @@ contains
     ! AmanS: wa_col is in waterstate_inst. No need in soilhydrology_type
     allocate(this%Qgw_lateral_col   (begc:endc))                 ; this%Qgw_lateral_col   (:)     = nan
     ! AmanS
-    allocate(this%Qgw_lateral_grc   (begc:endc))                 ; this%Qgw_lateral_grc   (:)     = nan
+    allocate(this%Qgw_lateral_grc   (begg:endg))                 ; this%Qgw_lateral_grc   (:)     = nan
     allocate(this%AqTransmiss_col   (begc:endc))                 ; this%AqTransmiss_col   (:)     = nan
     allocate(this%Pump_wa_col       (begc:endc))                 ; this%Pump_wa_col       (:)     = nan
     allocate(this%QlatField_northing_grc (begg:endg))            ; this%QlatField_northing_grc(:) = nan

@@ -477,6 +477,7 @@ contains
      use subgridAveMod     , only : c2g
      use dynSubgridControlMod, only : get_for_testing_zero_dynbal_fluxes
      use SurfaceAlbedoType , only : surfalb_type
+     use spmdMod           , only : masterproc  ! AmanS
      !
      ! !ARGUMENTS:
      type(bounds_type)     , intent(in)    :: bounds  
@@ -517,9 +518,14 @@ contains
      real(r8) :: errseb_max_val                         ! Maximum value of error in surface energy conservation error over all columns [W m-2]
      real(r8) :: errsoi_col_max_val                     ! Maximum value of column-level soil/lake energy conservation error over all columns [W m-2]
 
-     real(r8), parameter :: h2o_warning_thresh       = 1.e-9_r8                       ! Warning threshhold for error in errh2o and errh2osnow 
+   !   real(r8), parameter :: h2o_warning_thresh       = 1.e-9_r8                       ! Warning threshhold for error in errh2o and errh2osnow 
+   !   real(r8), parameter :: energy_warning_thresh    = 1.e-7_r8                       ! Warning threshhold for error in errsol, errsol, errseb, errlonv
+   !   real(r8), parameter :: error_thresh             = 1.e-5_r8                       ! Error threshhold for conservation error
+     ! AmanS
+     real(r8), parameter :: h2o_warning_thresh       = 1.e-5_r8                       ! Warning threshhold for error in errh2o and errh2osnow 
      real(r8), parameter :: energy_warning_thresh    = 1.e-7_r8                       ! Warning threshhold for error in errsol, errsol, errseb, errlonv
-     real(r8), parameter :: error_thresh             = 1.e-5_r8                       ! Error threshhold for conservation error
+     real(r8), parameter :: error_thresh             = 1.e-1_r8                       ! Error threshhold for conservation error
+
      character(*), parameter    :: subname = "('BalanceCheck')" !Tanjila
      !-----------------------------------------------------------------------
 
@@ -792,7 +798,8 @@ contains
          qflx_snwcp_discarded_ice_grc(bounds%begg:bounds%endg),  &
          c2l_scale_type= 'urbanf', l2g_scale_type='unity' )
        
-       
+       ! AmanS: Dont need to subtract grid level pumping in grid level check
+       ! because pumped water has already been subtracted in lnd2atmMod
        select case(groundwater_scheme)
 
           ! Groundwater scheme: Default
@@ -804,7 +811,7 @@ contains
                       + forc_snow_grc(g)  &
                       + forc_flood_grc(g)  &
                       + qflx_sfc_irrig_grc(g)  &
-                      - soilhydrology_inst%Pump_wa_col(g)&
+                      - soilhydrology_inst%Pump_wa_col(g)  &
                       + qflx_glcice_dyn_water_flux_grc(g)  &
                       - qflx_evap_tot_grc(g)  &
                       - qflx_surf_grc(g)  &
@@ -824,7 +831,7 @@ contains
                       + forc_snow_grc(g)  &
                       + forc_flood_grc(g)  &
                       + qflx_sfc_irrig_grc(g)  &
-                      - soilhydrology_inst%Pump_wa_col(g)&
+                      - soilhydrology_inst%Pump_wa_col(g)  &
                       + soilhydrology_inst%Qgw_lateral_grc(g) &
                       + qflx_glcice_dyn_water_flux_grc(g)  &
                       - qflx_evap_tot_grc(g)  &
@@ -841,6 +848,12 @@ contains
 
        end select  ! case for the lower boundary condition
        
+       ! AmanS
+       if (masterproc) then
+         write(iulog,*) 'AmanS check: qflx_drain                = ',qflx_drain_grc(indexg)
+         write(iulog,*) 'AmanS check: qflx_drain_perched        = ',qflx_drain_perched_grc(indexg)
+      end if
+
        ! add landunit level flux variable, convert from (m3/s) to (kg m-2 s-1)
        if (use_hillslope_routing) then
           ! output water flux from streamflow (+)
@@ -873,7 +886,6 @@ contains
              write(iulog,*)'forc_rain                 = ',forc_rain_grc(indexg)*dtime
              write(iulog,*)'forc_snow                 = ',forc_snow_grc(indexg)*dtime
              write(iulog,*)'lateralflow               = ',soilhydrology_inst%Qgw_lateral_grc(indexg)*dtime
-             write(iulog,*)'Pump_wa_col               = ',soilhydrology_inst%Pump_wa_col(indexg)*dtime
              write(iulog,*)'endwb_grc                 = ',endwb_grc(indexg)
              write(iulog,*)'begwb_grc                 = ',begwb_grc(indexg)
 

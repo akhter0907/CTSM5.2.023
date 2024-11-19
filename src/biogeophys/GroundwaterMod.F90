@@ -469,15 +469,18 @@ contains
 
              end if
 
+             ! AmanS: Tanjila pointed out that Qn_glob is volume (km2*mm) as it has been multiplied by dtime above
+             ! So, changing it back to volume rate by dividing by dtime
+             Qn_glob(g) = Qn_glob(g) / dtime * 1._r8
 
              ! AmanS: Print components of lateral flow for debug
              if (debug .and. masterproc) then
                  100 format(A20, A, I0, A, E12.3)
-                 write(iulog, *) 'nstep = ', nstep
-                 write(iulog, 100) subname, 'g =', g, ': Qn_glob(g) = ', Qn_glob(g)
-                 write(iulog, 100) subname, 'g =', g, ': widMean    = ', widMean
-                 write(iulog, 100) subname, 'g =', g, ': AqTransmissMean = ', AqTransmissMean
-                 write(iulog, 100) subname, 'g =', g, ': lenMean    = ', lenMean
+               !   write(iulog, *) 'nstep = ', nstep
+               !   write(iulog, 100) subname, 'g =', g, ': Qn_glob(g) = ', Qn_glob(g)
+               !   write(iulog, 100) subname, 'g =', g, ': widMean    = ', widMean
+               !   write(iulog, 100) subname, 'g =', g, ': AqTransmissMean = ', AqTransmissMean
+               !   write(iulog, 100) subname, 'g =', g, ': lenMean    = ', lenMean
                !   write(iulog, 100) subname, 'g =', g, ': dtime      = ', dtime ! default dtime = 1800
              end if
           ! IF there is pumping, the GW lateral flow is ruled by Combination of Darcy's and Theim
@@ -519,13 +522,13 @@ contains
           colArea = col%wtgcell(c) * grc%area(g) * km2_to_mm2
           Qgw_lateral(c) = Qn_glob(g) * aRatio / colArea  !unit is mm
 
-          if (debug .and. masterproc) then
-            300 format(A20, 1X, A, 1X, I0, 2X, A, 1X, I0, 3X, A, E12.3)
-            write(iulog, *) 'CHECK BEGIN before Qgw_lateral_grc g = 555'
-            write(iulog, 300) subname, 'g =', g, 'c =', c, ': Qgw_lateral_grc(g) = ', soilhydrology_inst%Qgw_lateral_grc(g)
-            write(iulog, 300) subname, 'g =', g, 'c =', c, ': Qgw_lateral_grc(g) = ', soilhydrology_inst%Qgw_lateral_grc(g) + Qgw_lateral(c)
-            write(iulog, *) 'CHECK END before Qgw_lateral_grc g = 555'
-          end if
+         !  if (debug .and. masterproc) then
+         !    300 format(A20, 1X, A, 1X, I0, 2X, A, 1X, I0, 3X, A, E12.3)
+         !    write(iulog, *) 'CHECK BEGIN before Qgw_lateral_grc g = 555'
+         !    write(iulog, 300) subname, 'g =', g, 'c =', c, ': Qgw_lateral_grc(g) = ', soilhydrology_inst%Qgw_lateral_grc(g)
+         !    write(iulog, 300) subname, 'g =', g, 'c =', c, ': Qgw_lateral_grc(g) = ', soilhydrology_inst%Qgw_lateral_grc(g) + Qgw_lateral(c)
+         !    write(iulog, *) 'CHECK END before Qgw_lateral_grc g = 555'
+         !  end if
 
           ! AmanS: grid level lateral flow for balance check
           soilhydrology_inst%Qgw_lateral_grc(g) = soilhydrology_inst%Qgw_lateral_grc(g) + Qgw_lateral(c)
