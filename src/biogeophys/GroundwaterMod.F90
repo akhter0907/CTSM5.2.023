@@ -55,6 +55,7 @@ module GroundwaterMod
 
   ! !PUBLIC TYPES:
   implicit none
+  logical :: debug = .true.  ! for debugging this module
   private
   
    type, public :: groundwater_type
@@ -405,7 +406,6 @@ contains
                  deltaxMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gtoplft(g)))) * km_to_mm / 2._r8
                  widMean = deltaxMean * sqrt(0.5_r8 * tan(rpi/8._r8))
                  Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%gtoplft(g))) * m_to_mm * dtime / lenMean
-
              end if
 
              if (ldecomp%gtop(g) <= ng .and. ldecomp%gtop(g) >= 1 .and. ZeroHydroCell_glob(ldecomp%gtop(g)) == 0) then
@@ -413,7 +413,6 @@ contains
                  lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gtop(g)))) * km_to_mm / 2._r8
                  widMean = lenMean * sqrt(0.5_r8 * tan(rpi/8._r8))
                  Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%gtop(g))) * m_to_mm * dtime / lenMean
-
              end if
 
              if (ldecomp%gtoprgt(g) <= ng .and. ldecomp%gtoprgt(g) >= 1 .and. ZeroHydroCell_glob(ldecomp%gtoprgt(g)) == 0) then
@@ -422,7 +421,6 @@ contains
                  deltaxMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gtoprgt(g)))) * km_to_mm / 2._r8
                  widMean = deltaxMean * sqrt(0.5_r8 * tan(rpi/8._r8))
                  Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%gtoprgt(g))) * m_to_mm * dtime / lenMean
-
              end if
 
              if (ldecomp%grgt(g) <= ng .and. ldecomp%grgt(g) >= 1 .and. ZeroHydroCell_glob(ldecomp%grgt(g)) == 0) then
@@ -430,7 +428,6 @@ contains
                  lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%grgt(g)))) * km_to_mm / 2._r8
                  widMean = lenMean * sqrt(0.5_r8 * tan(rpi/8._r8))
                  Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%grgt(g))) * m_to_mm * dtime / lenMean
-
              end if	
 
              if (ldecomp%gbotrgt(g) <= ng .and. ldecomp%gbotrgt(g) >= 1 .and. ZeroHydroCell_glob(ldecomp%gbotrgt(g)) == 0) then
@@ -439,7 +436,6 @@ contains
                  deltaxMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gbotrgt(g)))) * km_to_mm / 2._r8
                  widMean = deltaxMean * sqrt(0.5_r8 * tan(rpi/8._r8))
                  Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%gbotrgt(g))) * m_to_mm * dtime / lenMean
-
              end if
 
              if (ldecomp%gbot(g) <= ng .and. ldecomp%gbot(g) >= 1 .and. ZeroHydroCell_glob(ldecomp%gbot(g)) == 0) then
@@ -447,7 +443,6 @@ contains
                  lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gbot(g)))) * km_to_mm / 2._r8
                  widMean = lenMean * sqrt(0.5_r8 * tan(rpi/8._r8))
                  Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%gbot(g))) * m_to_mm * dtime / lenMean
-
              end if
 
              if (ldecomp%gbotlft(g) <= ng .and. ldecomp%gbotlft(g) >= 1 .and. ZeroHydroCell_glob(ldecomp%gbotlft(g)) == 0) then
@@ -456,21 +451,29 @@ contains
                  deltaxMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%gbotlft(g)))) * km_to_mm / 2._r8
                  widMean = deltaxMean * sqrt(0.5_r8 * tan(rpi/8._r8))
                  Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%gbotlft(g))) * m_to_mm * dtime / lenMean
-
              end if
 
              if (ldecomp%glft(g) <= ng .and. ldecomp%glft(g) >= 1 .and. ZeroHydroCell_glob(ldecomp%glft(g)) == 0) then
                  AqTransmissMean = (AqTransmiss_glob(g) + AqTransmiss_glob(ldecomp%glft(g)))/2._r8
                  lenMean = (sqrt(g_cellarea_glob(g)) + sqrt(g_cellarea_glob(ldecomp%glft(g)))) * km_to_mm / 2._r8
                  widMean = lenMean * sqrt(0.5_r8 * tan(rpi/8._r8))
-                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%glft(g))) * m_to_mm * dtime / lenMean
-                 
+                 Qn_glob(g) = Qn_glob(g) + widMean * AqTransmissMean * (zwt_glob(g) - zwt_glob(ldecomp%glft(g))) * m_to_mm * dtime / lenMean                
              end if
-
           ! IF there is pumping, the GW lateral flow is ruled by Combination of Darcy's and Theim
           ! else if (ZeroHydroCell_glob(g)== 0 .and. GW_ratio_long(g) * qirrig_long(g) > 0._r8) then
-          Qn_glob(g) = Qn_glob(g)/dtime !Tanjila Dividing by dtime if it is redundant
-		  
+          Qn_glob(g) = Qn_glob(g)/(dtime*1._r8) !Tanjila Dividing by dtime if it is redundant
+			             ! AmanS: Print components of lateral flow for debug
+						 
+             ! AmanS: Print components of lateral flow for debug
+             if (debug .and. masterproc) then
+                 100 format(A20, A, I0, A, E12.3)
+                 write(iulog, *) 'nstep = ', nstep
+                 write(iulog, 100) subname, 'g =', g, ': Qn_glob(g) = ', Qn_glob(g)
+				 write(iulog, 100) subname, 'g =', g, ': widMean    = ', widMean
+                 write(iulog, 100) subname, 'g =', g, ': AqTransmissMean = ', AqTransmissMean
+                 write(iulog, 100) subname, 'g =', g, ': lenMean    = ', lenMean
+               !   write(iulog, 100) subname, 'g =', g, ': dtime      = ', dtime ! default dtime = 1800
+             end if		
           end if
        end do
    
@@ -484,7 +487,6 @@ contains
        ! end if
        ! convert m to mm water
 
-
        do fc = 1, num_hydrologyc
           c = filter_hydrologyc(fc)
           g = col%gridcell(c)
@@ -492,6 +494,12 @@ contains
           aRatio  = col%wtgcell(c) / g_totCweight(g)
           colArea = col%wtgcell(c) * grc%area(g) * km2_to_mm2
           Qgw_lateral(c) = Qn_glob(g) * aRatio / colArea  !unit is mm 
+		  
+          if (debug .and. masterproc) then
+            400 format(A20, 1X, A, 1X, I0, 2X, A, 1X, I0, 3X, A, E12.3)
+            write(iulog, *) 'nstep = ', nstep
+            write(iulog, 400) subname, 'g =', g, 'c =', c, ': Qgw_lateral(c) = ', Qgw_lateral(c)
+          end if
 
           rous = watsat(c,nlevsoi) &
                * ( 1. - (1.+1.e3*zwt(c)/sucsat(c,nlevsoi))**(-1./bsw(c,nlevsoi)))

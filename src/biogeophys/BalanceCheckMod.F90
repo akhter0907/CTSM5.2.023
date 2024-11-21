@@ -873,9 +873,9 @@ contains
              write(iulog,*)'errh2o_grc                = ',errh2o_grc(indexg)
              write(iulog,*)'forc_rain                 = ',forc_rain_grc(indexg)*dtime
              write(iulog,*)'forc_snow                 = ',forc_snow_grc(indexg)*dtime
-             write(iulog,*)'lateralflow               = ',Qgw_lateral_grc(indexg)!*dtime !Tanjila
+             write(iulog,*)'lateralflow               = ',Qgw_lateral_grc(indexg)*dtime !Tanjila
              write(iulog,*)'Pump_wa_grc               = ',Pump_wa_grc(indexg)*dtime
-	     write(iulog,*)'GW_ratio                  = ',grc%GW_ratio(indexg)  !Tanjila grc%GW_ratio(g)
+	         write(iulog,*)'GW_ratio                  = ',grc%GW_ratio(indexg)  !Tanjila grc%GW_ratio(g)
              write(iulog,*)'endwb_grc                 = ',endwb_grc(indexg)
              write(iulog,*)'begwb_grc                 = ',begwb_grc(indexg)
 
