@@ -811,7 +811,6 @@ contains
                       + forc_snow_grc(g)  &
                       + forc_flood_grc(g)  &
                       + qflx_sfc_irrig_grc(g)  &
-                      - soilhydrology_inst%Pump_wa_col(g)  &
                       + qflx_glcice_dyn_water_flux_grc(g)  &
                       - qflx_evap_tot_grc(g)  &
                       - qflx_surf_grc(g)  &
@@ -831,7 +830,6 @@ contains
                       + forc_snow_grc(g)  &
                       + forc_flood_grc(g)  &
                       + qflx_sfc_irrig_grc(g)  &
-                      - soilhydrology_inst%Pump_wa_col(g)  &
                       + soilhydrology_inst%Qgw_lateral_grc(g) &
                       + qflx_glcice_dyn_water_flux_grc(g)  &
                       - qflx_evap_tot_grc(g)  &
