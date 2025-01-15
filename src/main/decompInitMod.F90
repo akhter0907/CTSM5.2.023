@@ -304,6 +304,7 @@ contains
        write(iulog,*)'   total number of land gridcells = ',numg
        write(iulog,*)' Decomposition Characteristics'
        write(iulog,*)'   clumps per process             = ',clump_pproc
+       write(iulog,*)'   AmanS: number of processors    = ',npes
        write(iulog,*)
     end if
     call shr_sys_flush(iulog)
