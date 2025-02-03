@@ -477,6 +477,7 @@ contains
      use subgridAveMod     , only : c2g
      use dynSubgridControlMod, only : get_for_testing_zero_dynbal_fluxes
      use SurfaceAlbedoType , only : surfalb_type
+	 use spmdMod , only : masterproc ! AmanS
      !
      ! !ARGUMENTS:
      type(bounds_type)     , intent(in)    :: bounds  
