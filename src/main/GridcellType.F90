@@ -31,7 +31,9 @@ module GridcellType
      logical , pointer :: active           (:) ! just needed for symmetry with other subgrid types
 
      integer,  pointer :: nbedrock         (:) ! index of uppermost bedrock layer
-
+     ! AmanS: Clump and processor id
+     integer , pointer :: cid              (:) ! clump index of grc
+     integer , pointer :: pid              (:) ! processor index of grc
      ! Daylength
      real(r8) , pointer :: max_dayl        (:) ! maximum daylength for this grid cell (s)
      real(r8) , pointer :: dayl            (:) ! daylength (seconds)
@@ -73,6 +75,10 @@ contains
     allocate(this%bedrock_depth  (begg:endg)) ; this%bedrock_depth  (:) = nan !Tanjila comment: FFelfelani added
     allocate(this%active    (begg:endg)) ; this%active    (:) = .true.
     allocate(this%nbedrock  (begg:endg)) ; this%nbedrock  (:) = ispval
+    ! AmanS: Clump and proc id
+    ! Initialize to -1 which is invalid
+    allocate(this%cid       (begg:endg)) ; this%cid       (:) = -1
+    allocate(this%pid       (begg:endg)) ; this%pid       (:) = -1
 
     ! This is initiailized in module DayLength
     allocate(this%max_dayl  (begg:endg)) ; this%max_dayl  (:) = nan
@@ -97,6 +103,8 @@ contains
     deallocate(this%londeg           )
     deallocate(this%GW_ratio         ) !Tanjila comment: FFelfelani added
     deallocate(this%bedrock_depth    ) !Tanjila comment: FFelfelani added
+    deallocate(this%cid              ) ! AmanS
+    deallocate(this%pid              ) ! AmanS
     deallocate(this%active           )
     deallocate(this%nbedrock         )
     deallocate(this%max_dayl         )

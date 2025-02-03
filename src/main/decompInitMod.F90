@@ -310,6 +310,7 @@ contains
        write(iulog,*)'   latitude points                = ',lnj
        write(iulog,*)'   total number of land gridcells = ',numg
        write(iulog,*)' Decomposition Characteristics'
+	   write(iulog,*)'   AmanS: number of processors    = ',npes
        write(iulog,*)'   clumps per process             = ',clump_pproc
        write(iulog,*)
     end if

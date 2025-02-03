@@ -61,6 +61,7 @@ contains
     use landunit_varcon   , only : isturb_tbd, isturb_hd, isturb_md, istcrop
     use clm_varctl        , only : use_fates
     use shr_const_mod     , only : SHR_CONST_PI
+	use spmdMod           , only : iam ! AmanS: To get current proc id
     !
     ! !ARGUMENTS:
     type(bounds_type)      , intent(in) :: bounds_clump
@@ -181,6 +182,9 @@ contains
        grc%londeg(gdc) = ldomain%lonc(gdc) 
        grc%lat(gdc)    = grc%latdeg(gdc) * SHR_CONST_PI/180._r8  
        grc%lon(gdc)    = grc%londeg(gdc) * SHR_CONST_PI/180._r8
+	   
+	   
+       grc%pid(gdc)    = iam  ! AmanS: assign proc id
     enddo
 
     ! Fill in subgrid datatypes
